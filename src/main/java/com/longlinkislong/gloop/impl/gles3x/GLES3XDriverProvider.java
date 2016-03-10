@@ -7,6 +7,8 @@ package com.longlinkislong.gloop.impl.gles3x;
 
 import com.longlinkislong.gloop.spi.Driver;
 import com.longlinkislong.gloop.spi.DriverProvider;
+import java.util.Arrays;
+import java.util.List;
 import org.lwjgl.opengles.GLES;
 
 /**
@@ -24,6 +26,11 @@ public final class GLES3XDriverProvider implements DriverProvider {
     @Override
     public Driver getDriverInstance() {
         return Holder.INSTANCE;
+    }
+    
+    @Override
+    public List<String> getDriverDescription() {
+        return Arrays.asList("opengles");
     }
 
     @Override
