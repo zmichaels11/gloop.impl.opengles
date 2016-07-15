@@ -5,7 +5,7 @@
  */
 package com.longlinkislong.gloop.impl.gles2x;
 
-import com.longlinkislong.gloop.spi.Texture;
+import com.longlinkislong.gloop.glspi.Texture;
 
 /**
  *

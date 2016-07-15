@@ -5,7 +5,7 @@
  */
 package com.longlinkislong.gloop.impl.gles3x;
 
-import com.longlinkislong.gloop.spi.Sampler;
+import com.longlinkislong.gloop.glspi.Sampler;
 
 /**
  *

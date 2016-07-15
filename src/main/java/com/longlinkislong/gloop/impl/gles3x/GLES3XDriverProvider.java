@@ -5,8 +5,8 @@
  */
 package com.longlinkislong.gloop.impl.gles3x;
 
-import com.longlinkislong.gloop.spi.Driver;
-import com.longlinkislong.gloop.spi.DriverProvider;
+import com.longlinkislong.gloop.glspi.Driver;
+import com.longlinkislong.gloop.glspi.DriverProvider;
 import java.util.Arrays;
 import java.util.List;
 import org.lwjgl.opengles.GLES;

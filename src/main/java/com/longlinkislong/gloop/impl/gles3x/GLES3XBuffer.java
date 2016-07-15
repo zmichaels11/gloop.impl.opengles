@@ -5,7 +5,7 @@
  */
 package com.longlinkislong.gloop.impl.gles3x;
 
-import com.longlinkislong.gloop.spi.Buffer;
+import com.longlinkislong.gloop.glspi.Buffer;
 import java.nio.ByteBuffer;
 
 /**

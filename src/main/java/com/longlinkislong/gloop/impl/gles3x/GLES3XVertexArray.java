@@ -5,7 +5,7 @@
  */
 package com.longlinkislong.gloop.impl.gles3x;
 
-import com.longlinkislong.gloop.spi.VertexArray;
+import com.longlinkislong.gloop.glspi.VertexArray;
 
 /**
  *

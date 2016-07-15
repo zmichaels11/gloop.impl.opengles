@@ -5,23 +5,18 @@
  */
 package com.longlinkislong.gloop.impl.gles3x;
 
-import com.longlinkislong.gloop.glspi.Texture;
+import com.longlinkislong.gloop.glspi.Renderbuffer;
 
 /**
  *
  * @author zmichaels
  */
-public final class GLES3XTexture implements Texture {
-
-    int internalFormat;
-
-    int target = -1;
-
-    int textureId = -1;
+public class GLES3XRenderbuffer implements Renderbuffer {
+    int renderbufferId = -1;
 
     @Override
     public boolean isValid() {
-        return textureId != -1;
+        return renderbufferId != -1;
     }
 
 }

@@ -5,7 +5,9 @@
  */
 package com.longlinkislong.gloop.impl.gles3x;
 
-import com.longlinkislong.gloop.spi.Program;
+import com.longlinkislong.gloop.glspi.Program;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -13,6 +15,7 @@ import com.longlinkislong.gloop.spi.Program;
  */
 public final class GLES3XProgram implements Program {
     int programId = -1;
+    final Map<String, Integer> uniformBindings = new HashMap<>(0);
     
     @Override
     public boolean isValid() {
