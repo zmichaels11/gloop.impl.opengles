@@ -12,7 +12,6 @@ import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import org.lwjgl.opengles.EXTBufferStorage;
-import org.lwjgl.opengles.EXTMultiDrawArrays;
 import org.lwjgl.opengles.EXTTextureFilterAnisotropic;
 import org.lwjgl.opengles.GLES;
 import org.lwjgl.opengles.GLES20;
@@ -28,6 +27,7 @@ public final class GLES3XDriver implements Driver<
 
     @Override
     public void blendingDisable() {
+
         GLES20.glDisable(GLES20.GL_BLEND);
     }
 
@@ -56,8 +56,18 @@ public final class GLES3XDriver implements Driver<
             EXTBufferStorage.glBufferStorageEXT(GLES20.GL_ARRAY_BUFFER, size, bitflags);
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, currentBuffer);
         } else {
-            throw new UnsupportedOperationException("Buffer storage is not supported!");
+            bufferAllocate(buffer, size, GLES20.GL_DYNAMIC_DRAW);
         }
+    }
+
+    @Override
+    public void bufferBindAtomic(GLES3XBuffer bt, int i) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void bufferBindAtomic(GLES3XBuffer bt, int i, long l, long l1) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
@@ -81,7 +91,7 @@ public final class GLES3XDriver implements Driver<
 
     @Override
     public void bufferBindStorage(GLES3XBuffer bt, int index, long offset, long size) {
-        if(GLES.getCapabilities().GLES31) {
+        if (GLES.getCapabilities().GLES31) {
             GLES30.glBindBufferRange(GLES31.GL_SHADER_STORAGE_BUFFER, index, bt.bufferId, offset, size);
         } else {
             throw new UnsupportedOperationException("OpenGLES 3.1 is not supported!");
@@ -132,6 +142,16 @@ public final class GLES3XDriver implements Driver<
         final ByteBuffer inData = this.bufferMapData(buffer, offset, out.limit(), GLES30.GL_MAP_READ_BIT);
         out.put(inData).flip();
         this.bufferUnmapData(buffer);
+    }
+
+    @Override
+    public int bufferGetMaxUniformBindings() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public int bufferGetMaxUniformBlockSize() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
@@ -449,8 +469,8 @@ public final class GLES3XDriver implements Driver<
     }
 
     @Override
-    public void programSetStorageBlockBinding(GLES3XProgram pt, String string, int i) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void programSetStorageBlockBinding(GLES3XProgram pt, String uniformName, int binding) {
+        throw new UnsupportedOperationException("Not yet supported...");
     }
 
     @Override
@@ -712,6 +732,11 @@ public final class GLES3XDriver implements Driver<
     }
 
     @Override
+    public int shaderGetVersion() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
     public GLES3XTexture textureAllocate(int mipmaps, int internalFormat, int width, int height, int depth) {
         final int target;
 
@@ -870,6 +895,11 @@ public final class GLES3XDriver implements Driver<
     }
 
     @Override
+    public long textureMap(GLES3XTexture tt) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
     public void textureSetData(GLES3XTexture texture, int level, int xOffset, int yOffset, int zOffset, int width, int height, int depth, int format, int type, ByteBuffer data) {
         switch (texture.target) {
             case GLES20.GL_TEXTURE_2D: {
@@ -930,6 +960,21 @@ public final class GLES3XDriver implements Driver<
         GLES20.glBindTexture(texture.target, texture.textureId);
         GLES20.glTexParameterf(texture.target, param, value);
         GLES20.glBindTexture(texture.target, currentTexture);
+    }
+
+    @Override
+    public void textureUnmap(GLES3XTexture tt) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void transformFeedbackBegin(int i) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void transformFeedbackEnd() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
@@ -1039,32 +1084,6 @@ public final class GLES3XDriver implements Driver<
         GLES30.glBindVertexArray(vao.vertexArrayId);
         GLES30.glDrawElementsInstanced(drawMode, count, type, offset, instanceCount);
         GLES30.glBindVertexArray(currentVao);
-    }
-
-    @Override
-    public void vertexArrayDrawTransformFeedback(GLES3XVertexArray vao, int drawMode, int start, int count) {
-        final int currentVao = GLES20.glGetInteger(GLES30.GL_VERTEX_ARRAY_BINDING);
-
-        GLES30.glBindVertexArray(vao.vertexArrayId);
-        GLES20.glEnable(GLES30.GL_RASTERIZER_DISCARD);
-        GLES30.glBeginTransformFeedback(drawMode);
-        GLES20.glDrawArrays(drawMode, start, count);
-        GLES30.glEndTransformFeedback();
-        GLES20.glDisable(GLES30.GL_RASTERIZER_DISCARD);
-        GLES30.glBindVertexArray(currentVao);
-    }
-
-    @Override
-    public void vertexArrayMultiDrawArrays(GLES3XVertexArray vao, int drawMode, IntBuffer first, IntBuffer count) {
-        if (GLES.getCapabilities().GL_EXT_multi_draw_arrays) {
-            final int currentVao = GLES20.glGetInteger(GLES30.GL_VERTEX_ARRAY_BINDING);
-
-            GLES30.glBindVertexArray(vao.vertexArrayId);
-            EXTMultiDrawArrays.glMultiDrawArraysEXT(drawMode, first, count);
-            GLES30.glBindVertexArray(currentVao);
-        } else {
-            throw new UnsupportedOperationException("Multi Draw Arrays is not supported!");
-        }
     }
 
     @Override

@@ -11,7 +11,7 @@ import com.longlinkislong.gloop.glspi.Texture;
  *
  * @author zmichaels
  */
-public final class GLES2XTexture implements Texture {
+final class GLES2XTexture implements Texture {
     int textureId = -1;
     int internalFormat = -1;
     int target = -1;

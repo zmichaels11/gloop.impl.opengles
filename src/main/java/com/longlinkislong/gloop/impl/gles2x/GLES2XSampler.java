@@ -5,10 +5,17 @@
  */
 package com.longlinkislong.gloop.impl.gles2x;
 
+import com.longlinkislong.gloop.glspi.Sampler;
+
 /**
  *
  * @author zmichaels
  */
-public class GLES2XSampler {
+final class GLES2XSampler implements Sampler {
+
+    @Override
+    public boolean isValid() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
     
 }

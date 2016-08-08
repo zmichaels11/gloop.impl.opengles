@@ -5,10 +5,17 @@
  */
 package com.longlinkislong.gloop.impl.gles2x;
 
+import com.longlinkislong.gloop.glspi.Framebuffer;
+
 /**
  *
  * @author zmichaels
  */
-public class GLES2XFramebuffer {
+final class GLES2XFramebuffer implements Framebuffer{
+
+    @Override
+    public boolean isValid() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
     
 }
