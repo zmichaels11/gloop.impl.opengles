@@ -13,9 +13,11 @@ import com.longlinkislong.gloop.glspi.Framebuffer;
  */
 final class GLES2XFramebuffer implements Framebuffer{
 
+    int framebufferId = -1;
+
     @Override
     public boolean isValid() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return framebufferId != -1;
     }
     
 }

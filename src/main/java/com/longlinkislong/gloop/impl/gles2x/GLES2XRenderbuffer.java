@@ -13,9 +13,11 @@ import com.longlinkislong.gloop.glspi.Renderbuffer;
  */
 final class GLES2XRenderbuffer implements Renderbuffer {
 
+    int renderbufferId = -1;
+
     @Override
     public boolean isValid() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return renderbufferId != -1;
     }
 
 }

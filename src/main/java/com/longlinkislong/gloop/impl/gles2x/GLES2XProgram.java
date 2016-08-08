@@ -13,9 +13,11 @@ import com.longlinkislong.gloop.glspi.Program;
  */
 final class GLES2XProgram implements Program {
 
+    int programId = -1;
+
     @Override
     public boolean isValid() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return programId != -1;
     }
     
 }

@@ -6,14 +6,30 @@
 package com.longlinkislong.gloop.impl.gles2x;
 
 import com.longlinkislong.gloop.glspi.VertexArray;
+import java.util.ArrayList;
+import java.util.List;
+import org.lwjgl.opengles.GLES;
+import org.lwjgl.opengles.OESVertexArrayObject;
 
 /**
  *
  * @author zmichaels
  */
 final class GLES2XVertexArray implements VertexArray {
+    static int LAST_ALLOCATED_SOFT_VAO = 1;
     int vertexArrayId = -1;
-    
+    final List<Runnable> bindStatements;
+
+    GLES2XVertexArray() {
+        // emulate VAOs 
+        if (GLES.getCapabilities().GL_OES_vertex_array_object) {
+            this.bindStatements = new ArrayList<>(0);
+            this.vertexArrayId = LAST_ALLOCATED_SOFT_VAO++;
+        } else {
+            this.bindStatements = null;
+            this.vertexArrayId = OESVertexArrayObject.glGenVertexArraysOES();
+        }
+    }
     @Override
     public boolean isValid() {
         return vertexArrayId != -1;
