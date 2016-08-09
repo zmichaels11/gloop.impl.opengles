@@ -709,7 +709,7 @@ public final class GLES3XDriver implements Driver<
     }
 
     @Override
-    public GLES3XTexture textureAllocate(int mipmaps, int internalFormat, int width, int height, int depth) {
+    public GLES3XTexture textureAllocate(int mipmaps, int internalFormat, int width, int height, int depth, int dataType) {
         final int target;
 
         if (width < 1 || height < 1 || depth < 1) {
@@ -737,7 +737,7 @@ public final class GLES3XDriver implements Driver<
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAX_LEVEL, mipmaps);
 
                 for (int i = 0; i < mipmaps; i++) {
-                    GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, i, internalFormat, width, height, 0, guessFormat(internalFormat), GLES20.GL_UNSIGNED_BYTE, 0);
+                    GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, i, internalFormat, width, height, 0, guessFormat(internalFormat), dataType, 0);
                     width = Math.max(1, (width / 2));
                     height = Math.max(1, (height / 2));
                 }
@@ -749,7 +749,7 @@ public final class GLES3XDriver implements Driver<
                 GLES20.glTexParameteri(GLES30.GL_TEXTURE_3D, GLES30.GL_TEXTURE_MAX_LEVEL, mipmaps);
 
                 for (int i = 0; i < mipmaps; i++) {
-                    GLES30.glTexImage3D(GLES30.GL_TEXTURE_3D, i, internalFormat, width, height, depth, 0, guessFormat(internalFormat), GLES20.GL_UNSIGNED_BYTE, 0);
+                    GLES30.glTexImage3D(GLES30.GL_TEXTURE_3D, i, internalFormat, width, height, depth, 0, guessFormat(internalFormat), dataType, 0);
                     width = Math.max(1, (width / 2));
                     height = Math.max(1, (height / 2));
                     depth = Math.max(1, (depth / 2));

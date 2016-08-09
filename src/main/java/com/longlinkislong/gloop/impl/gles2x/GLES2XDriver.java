@@ -618,7 +618,7 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
     }
 
     @Override
-    public GLES2XTexture textureAllocate(int mipmaps, int internalFormat, int width, int height, int depth) {
+    public GLES2XTexture textureAllocate(int mipmaps, int internalFormat, int width, int height, int depth, int dataType) {
         if (depth != 1) {
             throw new IllegalArgumentException("OpenGLES2.0 only supports 2D textures!");
         }
@@ -634,7 +634,7 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture.textureId);
 
         for (int i = 0; i < mipmaps; i++) {
-            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, i, internalFormat, width, height, 0, guessFormat(internalFormat), GLES20.GL_UNSIGNED_BYTE, 0);
+            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, i, internalFormat, width, height, 0, guessFormat(internalFormat), dataType, 0);
             width = Math.max(1, (width / 2));
             height = Math.max(1, (height / 2));
         }
