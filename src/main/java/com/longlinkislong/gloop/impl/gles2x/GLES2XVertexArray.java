@@ -23,11 +23,12 @@ final class GLES2XVertexArray implements VertexArray {
     GLES2XVertexArray() {
         // emulate VAOs 
         if (GLES.getCapabilities().GL_OES_vertex_array_object) {
-            this.bindStatements = new ArrayList<>(0);
-            this.vertexArrayId = LAST_ALLOCATED_SOFT_VAO++;
-        } else {
             this.bindStatements = null;
             this.vertexArrayId = OESVertexArrayObject.glGenVertexArraysOES();
+        } else {
+            this.bindStatements = new ArrayList<>();
+            this.vertexArrayId = LAST_ALLOCATED_SOFT_VAO++;
+
         }
     }
     @Override
