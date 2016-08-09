@@ -17,11 +17,14 @@ import org.lwjgl.opengles.ANGLEInstancedArrays;
 import org.lwjgl.opengles.EXTDrawBuffers;
 import org.lwjgl.opengles.EXTInstancedArrays;
 import org.lwjgl.opengles.EXTMapBufferRange;
+import org.lwjgl.opengles.EXTTextureFilterAnisotropic;
 import org.lwjgl.opengles.GLES;
 import org.lwjgl.opengles.GLES20;
 import org.lwjgl.opengles.GLESCapabilities;
 import org.lwjgl.opengles.OESMapbuffer;
 import org.lwjgl.opengles.OESVertexArrayObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -517,7 +520,7 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
     @Override
     public GLES2XRenderbuffer renderbufferCreate(int internalFormat, int width, int height) {
         // adapt common OpenGL formats to similar OpenGLES formats
-        switch(internalFormat) {
+        switch (internalFormat) {
             case GL11.GL_RGB8:
                 internalFormat = GLES20.GL_RGB565;
                 break;
@@ -525,7 +528,7 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
                 internalFormat = GLES20.GL_RGBA4;
                 break;
         }
-        
+
         final GLES2XRenderbuffer renderbuffer = new GLES2XRenderbuffer();
 
         renderbuffer.renderbufferId = GLES20.glGenRenderbuffers();
@@ -735,16 +738,41 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
         GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, level, xOffset, yOffset, width, height, format, type, data);
     }
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(GLES2XDriver.class);
+
     @Override
     public void textureSetParameter(GLES2XTexture tt, int pName, int value) {
-        GLES20.glBindTexture(tt.target, tt.textureId);
-        GLES20.glTexParameteri(tt.target, pName, value);
+        switch (pName) {
+            case GLES20.GL_TEXTURE_MIN_FILTER:
+            case GLES20.GL_TEXTURE_MAG_FILTER:
+            case GLES20.GL_TEXTURE_WRAP_S:
+            case GLES20.GL_TEXTURE_WRAP_T:
+                GLES20.glBindTexture(tt.target, tt.textureId);
+                GLES20.glTexParameteri(tt.target, pName, value);
+                break;
+            default:
+                LOGGER.warn("Unsupported texture parameter name: {}", pName);
+        }
     }
 
     @Override
     public void textureSetParameter(GLES2XTexture tt, int pName, float value) {
-        GLES20.glBindTexture(tt.target, tt.textureId);
-        GLES20.glTexParameterf(tt.target, pName, value);
+        switch (pName) {
+            case EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT:
+                if (!GLES.getCapabilities().GL_EXT_texture_filter_anisotropic) {
+                    LOGGER.warn("EXT_texture_filter_anisotropic is not supported!");
+                    return;
+                }
+            case GLES20.GL_TEXTURE_MIN_FILTER:
+            case GLES20.GL_TEXTURE_MAG_FILTER:
+            case GLES20.GL_TEXTURE_WRAP_S:
+            case GLES20.GL_TEXTURE_WRAP_T:
+                GLES20.glBindTexture(tt.target, tt.textureId);
+                GLES20.glTexParameterf(tt.target, pName, value);
+                break;
+            default:
+                LOGGER.warn("Unsupported texture parameter name: {}", pName);
+        }
     }
 
     @Override
@@ -760,7 +788,7 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
     @Override
     public void transformFeedbackEnd() {
         throw new UnsupportedOperationException("OpenGLES 2.0 does not support feedback draw!");
-    }    
+    }
 
     @Override
     public void vertexArrayAttachBuffer(GLES2XVertexArray vao, int index, GLES2XBuffer buffer, int size, int type, int stride, long offset, int divisor) {
@@ -771,12 +799,12 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
         if (GLES.getCapabilities().GL_OES_vertex_array_object) {
             OESVertexArrayObject.glBindVertexArrayOES(vao.vertexArrayId);
 
-            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);            
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
             GLES20.glVertexAttribPointer(index, size, type, false, stride, offset);
             GLES20.glEnableVertexAttribArray(index);
         } else {
             final Runnable bindStatement = () -> {
-                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);                
+                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
                 GLES20.glVertexAttribPointer(index, size, type, false, stride, offset);
                 GLES20.glEnableVertexAttribArray(index);
             };
@@ -890,7 +918,7 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
             } else {
                 vat.bindStatements.forEach(Runnable::run);
             }
-            
+
             EXTInstancedArrays.glDrawElementsInstancedEXT(drawMode, count, type, offset, instanceCount);
         } else {
             throw new UnsupportedOperationException("Neither ANGLE_instanced_arrays nor EXT_instanced_arrays are not supported!");
@@ -904,20 +932,20 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
 
     @Override
     public int guessFormat(final int internalFormat) {
-        switch(internalFormat) {
+        switch (internalFormat) {
             case GLES20.GL_ALPHA:
             case GLES20.GL_LUMINANCE:
             case GLES20.GL_LUMINANCE_ALPHA:
             case GLES20.GL_RGB:
             case GLES20.GL_RGBA:
                 return internalFormat;
-            default :
+            default:
                 return GLES20.GL_RGBA;
         }
     }
 
     int simplifyFormat(final int format) {
-        switch(format) {
+        switch (format) {
             case GL11.GL_RGB8:
                 return GLES20.GL_RGB;
             case GL11.GL_RGBA8:

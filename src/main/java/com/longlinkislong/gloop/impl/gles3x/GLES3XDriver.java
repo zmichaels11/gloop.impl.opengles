@@ -18,6 +18,8 @@ import org.lwjgl.opengles.GLES20;
 import org.lwjgl.opengles.GLES30;
 import org.lwjgl.opengles.GLES31;
 import org.lwjgl.opengles.GLESCapabilities;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -696,7 +698,7 @@ public final class GLES3XDriver implements Driver<
     public int shaderGetVersion() {
         final GLESCapabilities caps = GLES.getCapabilities();
         //TODO: this isn't actually correct...
-        
+
         if (caps.GLES32) {
             return 320;
         } else if (caps.GLES31) {
@@ -727,9 +729,9 @@ public final class GLES3XDriver implements Driver<
         texture.textureId = GLES20.glGenTextures();
         texture.target = target;
         texture.internalFormat = internalFormat;
-        
+
         switch (target) {
-            case GLES20.GL_TEXTURE_2D:                
+            case GLES20.GL_TEXTURE_2D:
                 GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture.textureId);
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES30.GL_TEXTURE_BASE_LEVEL, 0);
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAX_LEVEL, mipmaps);
@@ -739,9 +741,9 @@ public final class GLES3XDriver implements Driver<
                     width = Math.max(1, (width / 2));
                     height = Math.max(1, (height / 2));
                 }
-                
+
                 break;
-            case GLES30.GL_TEXTURE_3D:                
+            case GLES30.GL_TEXTURE_3D:
                 GLES20.glBindTexture(GLES30.GL_TEXTURE_3D, texture.textureId);
                 GLES20.glTexParameteri(GLES30.GL_TEXTURE_3D, GLES30.GL_TEXTURE_BASE_LEVEL, 0);
                 GLES20.glTexParameteri(GLES30.GL_TEXTURE_3D, GLES30.GL_TEXTURE_MAX_LEVEL, mipmaps);
@@ -752,7 +754,7 @@ public final class GLES3XDriver implements Driver<
                     height = Math.max(1, (height / 2));
                     depth = Math.max(1, (depth / 2));
                 }
-                
+
                 break;
         }
 
@@ -784,7 +786,7 @@ public final class GLES3XDriver implements Driver<
     }
 
     @Override
-    public void textureGenerateMipmap(GLES3XTexture texture) {        
+    public void textureGenerateMipmap(GLES3XTexture texture) {
         GLES20.glBindTexture(texture.target, texture.textureId);
         GLES20.glGenerateMipmap(texture.target);
     }
@@ -851,30 +853,75 @@ public final class GLES3XDriver implements Driver<
     @Override
     public void textureSetData(GLES3XTexture texture, int level, int xOffset, int yOffset, int zOffset, int width, int height, int depth, int format, int type, ByteBuffer data) {
         switch (texture.target) {
-            case GLES20.GL_TEXTURE_2D: {                
+            case GLES20.GL_TEXTURE_2D: {
                 GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture.textureId);
-                GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, level, xOffset, yOffset, width, height, format, type, data);                
+                GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, level, xOffset, yOffset, width, height, format, type, data);
             }
             break;
-            case GLES30.GL_TEXTURE_3D: {                
+            case GLES30.GL_TEXTURE_3D: {
                 GLES20.glBindTexture(GLES30.GL_TEXTURE_3D, texture.textureId);
-                GLES30.glTexSubImage3D(GLES30.GL_TEXTURE_3D, level, xOffset, yOffset, zOffset, width, height, depth, format, type, data);                
+                GLES30.glTexSubImage3D(GLES30.GL_TEXTURE_3D, level, xOffset, yOffset, zOffset, width, height, depth, format, type, data);
             }
             break;
 
         }
     }
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(GLES3XDriver.class);
+
     @Override
-    public void textureSetParameter(GLES3XTexture texture, int param, int value) {        
-        GLES20.glBindTexture(texture.target, texture.textureId);
-        GLES20.glTexParameteri(texture.target, param, value);
+    public void textureSetParameter(GLES3XTexture texture, int param, int value) {
+        switch (param) {
+            case GLES30.GL_TEXTURE_BASE_LEVEL:
+            case GLES30.GL_TEXTURE_COMPARE_FUNC:
+            case GLES30.GL_TEXTURE_COMPARE_MODE:
+            case GLES20.GL_TEXTURE_MIN_FILTER:
+            case GLES20.GL_TEXTURE_MAG_FILTER:
+            case GLES30.GL_TEXTURE_MIN_LOD:
+            case GLES30.GL_TEXTURE_MAX_LEVEL:
+            case GLES30.GL_TEXTURE_SWIZZLE_R:
+            case GLES30.GL_TEXTURE_SWIZZLE_G:
+            case GLES30.GL_TEXTURE_SWIZZLE_B:
+            case GLES30.GL_TEXTURE_SWIZZLE_A:
+            case GLES30.GL_TEXTURE_WRAP_R:
+            case GLES20.GL_TEXTURE_WRAP_S:
+            case GLES20.GL_TEXTURE_WRAP_T:
+                GLES20.glBindTexture(texture.target, texture.textureId);
+                GLES20.glTexParameteri(texture.target, param, value);
+                break;
+            default:
+                LOGGER.warn("Unsupported parameter name: {}", param);
+        }
     }
 
     @Override
     public void textureSetParameter(GLES3XTexture texture, int param, float value) {
-        GLES20.glBindTexture(texture.target, texture.textureId);
-        GLES20.glTexParameterf(texture.target, param, value);
+        switch (param) {
+            case EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT:
+                if (!GLES.getCapabilities().GL_EXT_texture_filter_anisotropic) {
+                    LOGGER.warn("EXT_texture_filter_anisotropic is not supported!");
+                    return;
+                }
+            case GLES30.GL_TEXTURE_BASE_LEVEL:
+            case GLES30.GL_TEXTURE_COMPARE_FUNC:
+            case GLES30.GL_TEXTURE_COMPARE_MODE:
+            case GLES20.GL_TEXTURE_MIN_FILTER:
+            case GLES20.GL_TEXTURE_MAG_FILTER:
+            case GLES30.GL_TEXTURE_MIN_LOD:
+            case GLES30.GL_TEXTURE_MAX_LEVEL:
+            case GLES30.GL_TEXTURE_SWIZZLE_R:
+            case GLES30.GL_TEXTURE_SWIZZLE_G:
+            case GLES30.GL_TEXTURE_SWIZZLE_B:
+            case GLES30.GL_TEXTURE_SWIZZLE_A:
+            case GLES30.GL_TEXTURE_WRAP_R:
+            case GLES20.GL_TEXTURE_WRAP_S:
+            case GLES20.GL_TEXTURE_WRAP_T:
+                GLES20.glBindTexture(texture.target, texture.textureId);
+                GLES20.glTexParameterf(texture.target, param, value);
+                break;
+            default:
+                LOGGER.warn("Unsupported parameter name: {}", param);
+        }
     }
 
     @Override
@@ -885,7 +932,7 @@ public final class GLES3XDriver implements Driver<
     @Override
     public void transformFeedbackBegin(int primitiveMode) {
         GLES20.glEnable(GLES30.GL_RASTERIZER_DISCARD);
-        GLES30.glBeginTransformFeedback(primitiveMode);        
+        GLES30.glBeginTransformFeedback(primitiveMode);
     }
 
     @Override
@@ -895,10 +942,10 @@ public final class GLES3XDriver implements Driver<
     }
 
     @Override
-    public void vertexArrayAttachBuffer(GLES3XVertexArray vao, int index, GLES3XBuffer buffer, int size, int type, int stride, long offset, int divisor) {        
+    public void vertexArrayAttachBuffer(GLES3XVertexArray vao, int index, GLES3XBuffer buffer, int size, int type, int stride, long offset, int divisor) {
         GLES30.glBindVertexArray(vao.vertexArrayId);
 
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);        
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
         GLES20.glVertexAttribPointer(index, size, type, false, stride, offset);
         GLES20.glEnableVertexAttribArray(index);
 
@@ -908,9 +955,9 @@ public final class GLES3XDriver implements Driver<
     }
 
     @Override
-    public void vertexArrayAttachIndexBuffer(GLES3XVertexArray vao, GLES3XBuffer buffer) {        
+    public void vertexArrayAttachIndexBuffer(GLES3XVertexArray vao, GLES3XBuffer buffer) {
         GLES30.glBindVertexArray(vao.vertexArrayId);
-        GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, buffer.bufferId);        
+        GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, buffer.bufferId);
     }
 
     @Override
@@ -929,40 +976,40 @@ public final class GLES3XDriver implements Driver<
     }
 
     @Override
-    public void vertexArrayDrawArrays(GLES3XVertexArray vao, int drawMode, int start, int count) {        
+    public void vertexArrayDrawArrays(GLES3XVertexArray vao, int drawMode, int start, int count) {
         GLES30.glBindVertexArray(vao.vertexArrayId);
-        GLES20.glDrawArrays(drawMode, start, count);        
+        GLES20.glDrawArrays(drawMode, start, count);
     }
 
     @Override
     public void vertexArrayDrawArraysIndirect(GLES3XVertexArray vao, GLES3XBuffer cmdBuffer, int drawMode, long offset) {
-        if (GLES.getCapabilities().GLES31) {            
+        if (GLES.getCapabilities().GLES31) {
             GLES30.glBindVertexArray(vao.vertexArrayId);
             GLES20.glBindBuffer(GLES31.GL_DRAW_INDIRECT_BUFFER, cmdBuffer.bufferId);
-            GLES31.glDrawArraysIndirect(drawMode, offset);            
+            GLES31.glDrawArraysIndirect(drawMode, offset);
         } else {
             throw new UnsupportedOperationException("Draw Arrays Indirect is not supported!");
         }
     }
 
     @Override
-    public void vertexArrayDrawArraysInstanced(GLES3XVertexArray vao, int drawMode, int first, int count, int instanceCount) {        
+    public void vertexArrayDrawArraysInstanced(GLES3XVertexArray vao, int drawMode, int first, int count, int instanceCount) {
         GLES30.glBindVertexArray(vao.vertexArrayId);
-        GLES30.glDrawArraysInstanced(drawMode, first, count, instanceCount);        
+        GLES30.glDrawArraysInstanced(drawMode, first, count, instanceCount);
     }
 
     @Override
-    public void vertexArrayDrawElements(GLES3XVertexArray vao, int drawMode, int count, int type, long offset) {        
+    public void vertexArrayDrawElements(GLES3XVertexArray vao, int drawMode, int count, int type, long offset) {
         GLES30.glBindVertexArray(vao.vertexArrayId);
-        GLES20.glDrawElements(drawMode, count, type, offset);        
+        GLES20.glDrawElements(drawMode, count, type, offset);
     }
 
     @Override
     public void vertexArrayDrawElementsIndirect(GLES3XVertexArray vao, GLES3XBuffer cmdBuffer, int drawMode, int indexType, long offset) {
-        if (GLES.getCapabilities().GLES31) {            
+        if (GLES.getCapabilities().GLES31) {
             GLES30.glBindVertexArray(vao.vertexArrayId);
             GLES20.glBindBuffer(GLES31.GL_DRAW_INDIRECT_BUFFER, cmdBuffer.bufferId);
-            GLES31.glDrawElementsIndirect(drawMode, indexType, offset);            
+            GLES31.glDrawElementsIndirect(drawMode, indexType, offset);
         } else {
             throw new UnsupportedOperationException("Draw Elements Indirect is not supported!");
         }
