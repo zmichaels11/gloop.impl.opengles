@@ -1,1 +1,2 @@
 com.longlinkislong.gloop.impl.gles3x.GLES3XDriverProvider
+com.longlinkislong.gloop.impl.gles2x.GLES2XDriverProvider
