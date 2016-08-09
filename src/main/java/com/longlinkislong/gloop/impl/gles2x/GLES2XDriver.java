@@ -15,14 +15,13 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengles.ANGLEFramebufferBlit;
 import org.lwjgl.opengles.ANGLEInstancedArrays;
 import org.lwjgl.opengles.EXTDrawBuffers;
+import org.lwjgl.opengles.EXTInstancedArrays;
 import org.lwjgl.opengles.EXTMapBufferRange;
 import org.lwjgl.opengles.GLES;
 import org.lwjgl.opengles.GLES20;
 import org.lwjgl.opengles.GLESCapabilities;
 import org.lwjgl.opengles.OESMapbuffer;
 import org.lwjgl.opengles.OESVertexArrayObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -761,9 +760,7 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
     @Override
     public void transformFeedbackEnd() {
         throw new UnsupportedOperationException("OpenGLES 2.0 does not support feedback draw!");
-    }
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(GLES2XDriver.class);
+    }    
 
     @Override
     public void vertexArrayAttachBuffer(GLES2XVertexArray vao, int index, GLES2XBuffer buffer, int size, int type, int stride, long offset, int divisor) {
@@ -836,16 +833,26 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
 
     @Override
     public void vertexArrayDrawArraysInstanced(GLES2XVertexArray vat, int drawMode, int first, int count, int instanceCount) {
-        if (GLES.getCapabilities().GL_ANGLE_instanced_arrays) {
-            if (GLES.getCapabilities().GL_OES_vertex_array_object) {
+        final GLESCapabilities caps = GLES.getCapabilities();
+
+        if (caps.GL_ANGLE_instanced_arrays) {
+            if (caps.GL_OES_vertex_array_object) {
                 OESVertexArrayObject.glBindVertexArrayOES(vat.vertexArrayId);
             } else {
                 vat.bindStatements.forEach(Runnable::run);
             }
 
             ANGLEInstancedArrays.glDrawArraysInstancedANGLE(drawMode, first, count, instanceCount);
+        } else if (caps.GL_EXT_instanced_arrays) {
+            if (caps.GL_OES_vertex_array_object) {
+                OESVertexArrayObject.glBindVertexArrayOES(vat.vertexArrayId);
+            } else {
+                vat.bindStatements.forEach(Runnable::run);
+            }
+
+            EXTInstancedArrays.glDrawArraysInstancedEXT(drawMode, first, count, instanceCount);
         } else {
-            throw new UnsupportedOperationException("ANGLE_instanced_arrays is not supported!");
+            throw new UnsupportedOperationException("Neither ANGLE_instanced_arrays nor EXT_instanced_arrays are not supported!");
         }
     }
 
@@ -867,16 +874,26 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
 
     @Override
     public void vertexArrayDrawElementsInstanced(GLES2XVertexArray vat, int drawMode, int count, int type, long offset, int instanceCount) {
-        if (GLES.getCapabilities().GL_ANGLE_instanced_arrays) {
-            if (GLES.getCapabilities().GL_OES_vertex_array_object) {
+        final GLESCapabilities caps = GLES.getCapabilities();
+
+        if (caps.GL_ANGLE_instanced_arrays) {
+            if (caps.GL_OES_vertex_array_object) {
                 OESVertexArrayObject.glBindVertexArrayOES(vat.vertexArrayId);
             } else {
                 vat.bindStatements.forEach(Runnable::run);
             }
 
             ANGLEInstancedArrays.glDrawElementsInstancedANGLE(drawMode, count, type, offset, instanceCount);
+        } else if (caps.GL_EXT_instanced_arrays) {
+            if (caps.GL_OES_vertex_array_object) {
+                OESVertexArrayObject.glBindVertexArrayOES(vat.vertexArrayId);
+            } else {
+                vat.bindStatements.forEach(Runnable::run);
+            }
+            
+            EXTInstancedArrays.glDrawElementsInstancedEXT(drawMode, count, type, offset, instanceCount);
         } else {
-            throw new UnsupportedOperationException("ANGLE_instanced_arrays is not supported!");
+            throw new UnsupportedOperationException("Neither ANGLE_instanced_arrays nor EXT_instanced_arrays are not supported!");
         }
     }
 

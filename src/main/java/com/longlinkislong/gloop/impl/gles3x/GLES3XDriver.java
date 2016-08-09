@@ -17,6 +17,7 @@ import org.lwjgl.opengles.GLES;
 import org.lwjgl.opengles.GLES20;
 import org.lwjgl.opengles.GLES30;
 import org.lwjgl.opengles.GLES31;
+import org.lwjgl.opengles.GLESCapabilities;
 
 /**
  *
@@ -40,21 +41,18 @@ public final class GLES3XDriver implements Driver<
 
     @Override
     public void bufferAllocate(GLES3XBuffer buffer, long size, int usage) {
-        final int currentBuffer = GLES20.glGetInteger(GLES20.GL_ARRAY_BUFFER_BINDING);
-
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
         GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, size, usage);
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, currentBuffer);
+        buffer.size = size;
+        buffer.usage = usage;
     }
 
     @Override
     public void bufferAllocateImmutable(GLES3XBuffer buffer, long size, int bitflags) {
         if (GLES.getCapabilities().GL_EXT_buffer_storage) {
-            final int currentBuffer = GLES20.glGetInteger(GLES20.GL_ARRAY_BUFFER_BINDING);
-
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
             EXTBufferStorage.glBufferStorageEXT(GLES20.GL_ARRAY_BUFFER, size, bitflags);
-            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, currentBuffer);
+            buffer.access = bitflags;
         } else {
             bufferAllocate(buffer, size, GLES20.GL_DYNAMIC_DRAW);
         }
@@ -62,12 +60,12 @@ public final class GLES3XDriver implements Driver<
 
     @Override
     public void bufferBindAtomic(GLES3XBuffer bt, int i) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Atomic buffers are not supported in OpenGLES 3.0!");
     }
 
     @Override
     public void bufferBindAtomic(GLES3XBuffer bt, int i, long l, long l1) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Atomic buffers are not supported in OpenGLES 3.0!");
     }
 
     @Override
@@ -110,16 +108,10 @@ public final class GLES3XDriver implements Driver<
 
     @Override
     public void bufferCopyData(GLES3XBuffer srcBuffer, long srcOffset, GLES3XBuffer dstBuffer, long dstOffset, long size) {
-        final int currentCopyRead = GLES20.glGetInteger(GLES30.GL_COPY_READ_BUFFER_BINDING);
-        final int currentCopyWrite = GLES20.glGetInteger(GLES30.GL_COPY_WRITE_BUFFER_BINDING);
-
         GLES20.glBindBuffer(GLES30.GL_COPY_READ_BUFFER, srcBuffer.bufferId);
         GLES20.glBindBuffer(GLES30.GL_COPY_WRITE_BUFFER, dstBuffer.bufferId);
 
         GLES30.glCopyBufferSubData(GLES30.GL_COPY_READ_BUFFER, GLES30.GL_COPY_WRITE_BUFFER, srcOffset, dstOffset, size);
-
-        GLES20.glBindBuffer(GLES30.GL_COPY_READ_BUFFER, currentCopyRead);
-        GLES20.glBindBuffer(GLES30.GL_COPY_WRITE_BUFFER, currentCopyWrite);
     }
 
     @Override
@@ -134,6 +126,9 @@ public final class GLES3XDriver implements Driver<
         if (buffer.isValid()) {
             GLES20.glDeleteBuffers(buffer.bufferId);
             buffer.bufferId = -1;
+            buffer.usage = 0;
+            buffer.access = 0;
+            buffer.size = 0;
         }
     }
 
@@ -146,36 +141,27 @@ public final class GLES3XDriver implements Driver<
 
     @Override
     public int bufferGetMaxUniformBindings() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return GLES20.glGetInteger(GLES20.GL_MAX_FRAGMENT_UNIFORM_VECTORS);
     }
 
     @Override
     public int bufferGetMaxUniformBlockSize() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return GLES20.glGetInteger(GLES30.GL_MAX_UNIFORM_BLOCK_SIZE);
     }
 
     @Override
     public int bufferGetParameterI(GLES3XBuffer buffer, int paramId) {
-        final int currentAB = GLES20.glGetInteger(GLES20.GL_ARRAY_BUFFER_BINDING);
-
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
-        final int res = GLES20.glGetBufferParameteri(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, currentAB);
-        return res;
+        return GLES20.glGetBufferParameteri(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
     }
 
     @Override
     public void bufferInvalidateData(GLES3XBuffer buffer) {
-        final int currentAB = GLES20.glGetInteger(GLES20.GL_ARRAY_BUFFER_BINDING);
-
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
-
-        final int size = GLES20.glGetBufferParameteri(GLES20.GL_ARRAY_BUFFER, GLES20.GL_BUFFER_SIZE);
-        final int usage = GLES20.glGetBufferParameteri(GLES20.GL_ARRAY_BUFFER, GLES20.GL_BUFFER_USAGE);
-
-        GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, size, usage);
-
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, currentAB);
+        if (buffer.usage != 0 && buffer.access == 0) {
+            bufferAllocate(buffer, buffer.size, buffer.usage);
+        } else {
+            bufferAllocateImmutable(buffer, buffer.size, buffer.access); // is this right?
+        }
     }
 
     @Override
@@ -185,29 +171,21 @@ public final class GLES3XDriver implements Driver<
 
     @Override
     public ByteBuffer bufferMapData(GLES3XBuffer buffer, long offset, long length, int accessFlags) {
-        final int currentBuffer = GLES20.glGetInteger(GLES20.GL_ARRAY_BUFFER_BINDING);
-
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
         buffer.mapBuffer = GLES30.glMapBufferRange(GLES20.GL_ARRAY_BUFFER, offset, length, accessFlags, buffer.mapBuffer);
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, currentBuffer);
         return buffer.mapBuffer;
     }
 
     @Override
     public void bufferSetData(GLES3XBuffer buffer, ByteBuffer data, int usage) {
-        final int currentBuffer = GLES20.glGetInteger(GLES20.GL_ARRAY_BUFFER_BINDING);
-
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
         GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, data, usage);
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, currentBuffer);
     }
 
     @Override
     public void bufferUnmapData(GLES3XBuffer buffer) {
-        final int currentBuffer = GLES20.glGetInteger(GLES20.GL_ARRAY_BUFFER_BINDING);
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
         GLES30.glUnmapBuffer(GLES20.GL_ARRAY_BUFFER);
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, currentBuffer);
     }
 
     @Override
@@ -260,13 +238,11 @@ public final class GLES3XDriver implements Driver<
 
     @Override
     public void framebufferAddAttachment(GLES3XFramebuffer framebuffer, int attachmentId, GLES3XTexture texId, int mipmapLevel) {
-        final int currentFb = GLES20.glGetInteger(GLES20.GL_FRAMEBUFFER_BINDING);
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, framebuffer.framebufferId);
 
         switch (texId.target) {
             case GLES20.GL_TEXTURE_2D:
-                GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, framebuffer.framebufferId);
                 GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, attachmentId, GLES20.GL_TEXTURE_2D, texId.textureId, mipmapLevel);
-                GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, currentFb);
                 break;
             default:
                 throw new UnsupportedOperationException("Unsupported texture target!");
@@ -274,8 +250,9 @@ public final class GLES3XDriver implements Driver<
     }
 
     @Override
-    public void framebufferAddRenderbuffer(GLES3XFramebuffer ft, int i, GLES3XRenderbuffer rt) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void framebufferAddRenderbuffer(GLES3XFramebuffer ft, int attachmentId, GLES3XRenderbuffer rt) {
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, ft.framebufferId);
+        GLES20.glFramebufferRenderbuffer(GLES20.GL_FRAMEBUFFER, attachmentId, GLES20.GL_RENDERBUFFER, rt.renderbufferId);
     }
 
     @Override
@@ -289,16 +266,10 @@ public final class GLES3XDriver implements Driver<
 
     @Override
     public void framebufferBlit(GLES3XFramebuffer srcFb, int srcX0, int srcY0, int srcX1, int srcY1, GLES3XFramebuffer dstFb, int dstX0, int dstY0, int dstX1, int dstY1, int bitfield, int filter) {
-        final int currentReadFb = GLES20.glGetInteger(GLES30.GL_READ_FRAMEBUFFER_BINDING);
-        final int currentDrawFb = GLES20.glGetInteger(GLES30.GL_DRAW_FRAMEBUFFER_BINDING);
-
         GLES20.glBindFramebuffer(GLES30.GL_READ_FRAMEBUFFER, srcFb.framebufferId);
         GLES20.glBindFramebuffer(GLES30.GL_DRAW_FRAMEBUFFER, dstFb.framebufferId);
 
         GLES30.glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, bitfield, filter);
-
-        GLES20.glBindFramebuffer(GLES30.GL_DRAW_FRAMEBUFFER, currentDrawFb);
-        GLES20.glBindFramebuffer(GLES30.GL_READ_FRAMEBUFFER, currentReadFb);
     }
 
     @Override
@@ -325,43 +296,30 @@ public final class GLES3XDriver implements Driver<
 
     @Override
     public void framebufferGetPixels(GLES3XFramebuffer framebuffer, int x, int y, int width, int height, int format, int type, GLES3XBuffer dstBuffer) {
-        final int currentFB = GLES20.glGetInteger(GLES20.GL_FRAMEBUFFER_BINDING);
-        final int currentBuffer = GLES20.glGetInteger(GLES30.GL_PIXEL_PACK_BUFFER_BINDING);
-
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, framebuffer.framebufferId);
-
         GLES20.glBindBuffer(GLES30.GL_PIXEL_PACK_BUFFER, dstBuffer.bufferId);
+
         GLES20.glReadPixels(
                 x, y, width, height,
                 format, type,
                 0L);
-        GLES20.glBindBuffer(GLES30.GL_PIXEL_PACK_BUFFER, currentBuffer);
-
-        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, currentFB);
     }
 
     @Override
     public void framebufferGetPixels(GLES3XFramebuffer framebuffer, int x, int y, int width, int height, int format, int type, ByteBuffer dstBuffer) {
-        final int currentFB = GLES20.glGetInteger(GLES20.GL_FRAMEBUFFER_BINDING);
-
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, framebuffer.framebufferId);
 
         GLES20.glReadPixels(
                 x, y, width, height,
                 format, type,
                 dstBuffer);
-
-        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, currentFB);
     }
 
     @Override
     public boolean framebufferIsComplete(GLES3XFramebuffer framebuffer) {
-        final int currentFb = GLES20.glGetInteger(GLES20.GL_FRAMEBUFFER_BINDING);
-
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, framebuffer.framebufferId);
         final int complete = GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER);
 
-        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, currentFb);
         return complete == GLES20.GL_FRAMEBUFFER_COMPLETE;
     }
 
@@ -416,23 +374,27 @@ public final class GLES3XDriver implements Driver<
     }
 
     @Override
-    public int programGetStorageBlockBinding(GLES3XProgram pt, String string) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public int programGetStorageBlockBinding(GLES3XProgram pt, String storageName) {
+        if (pt.storageBindings.containsKey(storageName)) {
+            return pt.storageBindings.get(storageName);
+        } else {
+            return -1;
+        }
     }
 
     @Override
-    public int programGetUniformBlockBinding(GLES3XProgram pt, String string) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public int programGetUniformBlockBinding(GLES3XProgram pt, String uniformBlockName) {
+        if (pt.uniformBindings.containsKey(uniformBlockName)) {
+            return pt.uniformBindings.get(uniformBlockName);
+        } else {
+            return -1;
+        }
     }
 
     @Override
     public int programGetUniformLocation(GLES3XProgram program, String name) {
-        final int currentProgram = GLES20.glGetInteger(GLES20.GL_CURRENT_PROGRAM);
-
         GLES20.glUseProgram(program.programId);
-        final int res = GLES20.glGetUniformLocation(program.programId, name);
-        GLES20.glUseProgram(currentProgram);
-        return res;
+        return GLES20.glGetUniformLocation(program.programId, name);
     }
 
     @Override
@@ -465,20 +427,20 @@ public final class GLES3XDriver implements Driver<
 
     @Override
     public void programSetStorage(GLES3XProgram program, String storageName, GLES3XBuffer buffer, int bindingPoint) {
-        throw new UnsupportedOperationException("Shader storage is not supported!");
+        throw new UnsupportedOperationException("Removed deprecated call");
     }
 
     @Override
     public void programSetStorageBlockBinding(GLES3XProgram pt, String uniformName, int binding) {
-        throw new UnsupportedOperationException("Not yet supported...");
+        final int sBlockIndex = GLES30.glGetUniformBlockIndex(pt.programId, uniformName);
+
+        GLES30.glUniformBlockBinding(pt.programId, sBlockIndex, binding);
+        pt.storageBindings.put(uniformName, binding);
     }
 
     @Override
     public void programSetUniformBlock(GLES3XProgram program, String uniformName, GLES3XBuffer buffer, int bindingPoint) {
-        final int uBlock = GLES30.glGetUniformBlockIndex(program.programId, uniformName);
-
-        GLES30.glBindBufferBase(GLES30.GL_UNIFORM_BUFFER, bindingPoint, buffer.bufferId);
-        GLES30.glUniformBlockBinding(program.programId, uBlock, bindingPoint);
+        throw new UnsupportedOperationException("Removed deprecated call");
     }
 
     @Override
@@ -647,19 +609,18 @@ public final class GLES3XDriver implements Driver<
 
         out.renderbufferId = GLES20.glGenRenderbuffers();
 
-        final int currentRB = GLES20.glGetInteger(GLES20.GL_RENDERBUFFER_BINDING);
-
         GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER, out.renderbufferId);
         GLES20.glRenderbufferStorage(GLES20.GL_RENDERBUFFER, internalFormat, width, height);
-        GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER, currentRB);
 
         return out;
     }
 
     @Override
     public void renderbufferDelete(GLES3XRenderbuffer rt) {
-        GLES20.glDeleteRenderbuffers(rt.renderbufferId);
-        rt.renderbufferId = -1;
+        if (rt.isValid()) {
+            GLES20.glDeleteRenderbuffers(rt.renderbufferId);
+            rt.renderbufferId = -1;
+        }
     }
 
     @Override
@@ -733,7 +694,16 @@ public final class GLES3XDriver implements Driver<
 
     @Override
     public int shaderGetVersion() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final GLESCapabilities caps = GLES.getCapabilities();
+        //TODO: this isn't actually correct...
+        
+        if (caps.GLES32) {
+            return 320;
+        } else if (caps.GLES31) {
+            return 310;
+        } else {
+            return 300;
+        }
     }
 
     @Override
@@ -757,11 +727,9 @@ public final class GLES3XDriver implements Driver<
         texture.textureId = GLES20.glGenTextures();
         texture.target = target;
         texture.internalFormat = internalFormat;
-
-        int currentTexture;
+        
         switch (target) {
-            case GLES20.GL_TEXTURE_2D:
-                currentTexture = GLES20.glGetInteger(GLES20.GL_TEXTURE_BINDING_2D);
+            case GLES20.GL_TEXTURE_2D:                
                 GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture.textureId);
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES30.GL_TEXTURE_BASE_LEVEL, 0);
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAX_LEVEL, mipmaps);
@@ -771,11 +739,9 @@ public final class GLES3XDriver implements Driver<
                     width = Math.max(1, (width / 2));
                     height = Math.max(1, (height / 2));
                 }
-
-                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, currentTexture);
+                
                 break;
-            case GLES30.GL_TEXTURE_3D:
-                currentTexture = GLES20.glGetInteger(GLES30.GL_TEXTURE_BINDING_3D);
+            case GLES30.GL_TEXTURE_3D:                
                 GLES20.glBindTexture(GLES30.GL_TEXTURE_3D, texture.textureId);
                 GLES20.glTexParameteri(GLES30.GL_TEXTURE_3D, GLES30.GL_TEXTURE_BASE_LEVEL, 0);
                 GLES20.glTexParameteri(GLES30.GL_TEXTURE_3D, GLES30.GL_TEXTURE_MAX_LEVEL, mipmaps);
@@ -786,8 +752,7 @@ public final class GLES3XDriver implements Driver<
                     height = Math.max(1, (height / 2));
                     depth = Math.max(1, (depth / 2));
                 }
-
-                GLES20.glBindTexture(GLES30.GL_TEXTURE_3D, currentTexture);
+                
                 break;
         }
 
@@ -819,25 +784,9 @@ public final class GLES3XDriver implements Driver<
     }
 
     @Override
-    public void textureGenerateMipmap(GLES3XTexture texture) {
-        final int binding;
-
-        switch (texture.target) {
-            case GLES20.GL_TEXTURE_2D:
-                binding = GLES20.GL_TEXTURE_BINDING_2D;
-                break;
-            case GLES30.GL_TEXTURE_3D:
-                binding = GLES30.GL_TEXTURE_BINDING_3D;
-                break;
-            default:
-                throw new UnsupportedOperationException("Unsupported texture target: " + texture.target);
-        }
-
-        final int currentTexture = GLES20.glGetInteger(binding);
-
+    public void textureGenerateMipmap(GLES3XTexture texture) {        
         GLES20.glBindTexture(texture.target, texture.textureId);
         GLES20.glGenerateMipmap(texture.target);
-        GLES20.glBindTexture(texture.target, currentTexture);
     }
 
     @Override
@@ -896,26 +845,20 @@ public final class GLES3XDriver implements Driver<
 
     @Override
     public long textureMap(GLES3XTexture tt) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("OpenGLES 3.0 does not support bindless textures!");
     }
 
     @Override
     public void textureSetData(GLES3XTexture texture, int level, int xOffset, int yOffset, int zOffset, int width, int height, int depth, int format, int type, ByteBuffer data) {
         switch (texture.target) {
-            case GLES20.GL_TEXTURE_2D: {
-                final int currentTexture = GLES20.glGetInteger(GLES20.GL_TEXTURE_BINDING_2D);
-
+            case GLES20.GL_TEXTURE_2D: {                
                 GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture.textureId);
-                GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, level, xOffset, yOffset, width, height, format, type, data);
-                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, currentTexture);
+                GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, level, xOffset, yOffset, width, height, format, type, data);                
             }
             break;
-            case GLES30.GL_TEXTURE_3D: {
-                final int currentTexture = GLES20.glGetInteger(GLES30.GL_TEXTURE_BINDING_3D);
-
+            case GLES30.GL_TEXTURE_3D: {                
                 GLES20.glBindTexture(GLES30.GL_TEXTURE_3D, texture.textureId);
-                GLES30.glTexSubImage3D(GLES30.GL_TEXTURE_3D, level, xOffset, yOffset, zOffset, width, height, depth, format, type, data);
-                GLES20.glBindTexture(GLES30.GL_TEXTURE_3D, currentTexture);
+                GLES30.glTexSubImage3D(GLES30.GL_TEXTURE_3D, level, xOffset, yOffset, zOffset, width, height, depth, format, type, data);                
             }
             break;
 
@@ -923,85 +866,51 @@ public final class GLES3XDriver implements Driver<
     }
 
     @Override
-    public void textureSetParameter(GLES3XTexture texture, int param, int value) {
-        final int currentTexture;
-
-        switch (texture.target) {
-            case GLES20.GL_TEXTURE_2D:
-                currentTexture = GLES20.glGetInteger(GLES20.GL_TEXTURE_BINDING_2D);
-                break;
-            case GLES30.GL_TEXTURE_3D:
-                currentTexture = GLES20.glGetInteger(GLES30.GL_TEXTURE_BINDING_3D);
-                break;
-            default:
-                throw new UnsupportedOperationException("Unsupported texture target: " + texture.target);
-        }
-
+    public void textureSetParameter(GLES3XTexture texture, int param, int value) {        
         GLES20.glBindTexture(texture.target, texture.textureId);
         GLES20.glTexParameteri(texture.target, param, value);
-        GLES20.glBindTexture(texture.target, currentTexture);
     }
 
     @Override
     public void textureSetParameter(GLES3XTexture texture, int param, float value) {
-        final int currentTexture;
-
-        switch (texture.target) {
-            case GLES20.GL_TEXTURE_2D:
-                currentTexture = GLES20.glGetInteger(GLES20.GL_TEXTURE_BINDING_2D);
-                break;
-            case GLES30.GL_TEXTURE_3D:
-                currentTexture = GLES20.glGetInteger(GLES30.GL_TEXTURE_BINDING_3D);
-                break;
-            default:
-                throw new UnsupportedOperationException("Unsupported texture target: " + texture.target);
-        }
-
         GLES20.glBindTexture(texture.target, texture.textureId);
         GLES20.glTexParameterf(texture.target, param, value);
-        GLES20.glBindTexture(texture.target, currentTexture);
     }
 
     @Override
     public void textureUnmap(GLES3XTexture tt) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("OpenGLES 3.0 does not support bindless textures!");
     }
 
     @Override
-    public void transformFeedbackBegin(int i) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void transformFeedbackBegin(int primitiveMode) {
+        GLES20.glEnable(GLES30.GL_RASTERIZER_DISCARD);
+        GLES30.glBeginTransformFeedback(primitiveMode);        
     }
 
     @Override
     public void transformFeedbackEnd() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        GLES30.glEndTransformFeedback();
+        GLES20.glDisable(GLES30.GL_RASTERIZER_DISCARD);
     }
 
     @Override
-    public void vertexArrayAttachBuffer(GLES3XVertexArray vao, int index, GLES3XBuffer buffer, int size, int type, int stride, long offset, int divisor) {
-        final int currentVao = GLES20.glGetInteger(GLES30.GL_VERTEX_ARRAY_BINDING);
-
+    public void vertexArrayAttachBuffer(GLES3XVertexArray vao, int index, GLES3XBuffer buffer, int size, int type, int stride, long offset, int divisor) {        
         GLES30.glBindVertexArray(vao.vertexArrayId);
 
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
-        GLES20.glEnableVertexAttribArray(index);
-
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);        
         GLES20.glVertexAttribPointer(index, size, type, false, stride, offset);
+        GLES20.glEnableVertexAttribArray(index);
 
         if (divisor > 0) {
             GLES30.glVertexAttribDivisor(index, divisor);
         }
-
-        GLES30.glBindVertexArray(currentVao);
     }
 
     @Override
-    public void vertexArrayAttachIndexBuffer(GLES3XVertexArray vao, GLES3XBuffer buffer) {
-        final int currentVao = GLES20.glGetInteger(GLES30.GL_VERTEX_ARRAY_BINDING);
-
+    public void vertexArrayAttachIndexBuffer(GLES3XVertexArray vao, GLES3XBuffer buffer) {        
         GLES30.glBindVertexArray(vao.vertexArrayId);
-        GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, buffer.bufferId);
-        GLES30.glBindVertexArray(currentVao);
+        GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, buffer.bufferId);        
     }
 
     @Override
@@ -1020,58 +929,40 @@ public final class GLES3XDriver implements Driver<
     }
 
     @Override
-    public void vertexArrayDrawArrays(GLES3XVertexArray vao, int drawMode, int start, int count) {
-        final int currentVao = GLES20.glGetInteger(GLES30.GL_VERTEX_ARRAY_BINDING);
+    public void vertexArrayDrawArrays(GLES3XVertexArray vao, int drawMode, int start, int count) {        
         GLES30.glBindVertexArray(vao.vertexArrayId);
-        GLES20.glDrawArrays(drawMode, start, count);
-        GLES30.glBindVertexArray(currentVao);
+        GLES20.glDrawArrays(drawMode, start, count);        
     }
 
     @Override
     public void vertexArrayDrawArraysIndirect(GLES3XVertexArray vao, GLES3XBuffer cmdBuffer, int drawMode, long offset) {
-        if (GLES.getCapabilities().GLES31) {
-            final int currentVao = GLES20.glGetInteger(GLES30.GL_VERTEX_ARRAY_BINDING);
-            final int currentIndirect = GLES20.glGetInteger(GLES31.GL_DRAW_INDIRECT_BUFFER_BINDING);
-
+        if (GLES.getCapabilities().GLES31) {            
             GLES30.glBindVertexArray(vao.vertexArrayId);
             GLES20.glBindBuffer(GLES31.GL_DRAW_INDIRECT_BUFFER, cmdBuffer.bufferId);
-            GLES31.glDrawArraysIndirect(drawMode, offset);
-            GLES20.glBindBuffer(GLES31.GL_DRAW_INDIRECT_BUFFER, currentIndirect);
-            GLES30.glBindVertexArray(currentVao);
+            GLES31.glDrawArraysIndirect(drawMode, offset);            
         } else {
             throw new UnsupportedOperationException("Draw Arrays Indirect is not supported!");
         }
     }
 
     @Override
-    public void vertexArrayDrawArraysInstanced(GLES3XVertexArray vao, int drawMode, int first, int count, int instanceCount) {
-        final int currentVao = GLES20.glGetInteger(GLES30.GL_VERTEX_ARRAY_BINDING);
-
+    public void vertexArrayDrawArraysInstanced(GLES3XVertexArray vao, int drawMode, int first, int count, int instanceCount) {        
         GLES30.glBindVertexArray(vao.vertexArrayId);
-        GLES30.glDrawArraysInstanced(drawMode, first, count, instanceCount);
-        GLES30.glBindVertexArray(currentVao);
+        GLES30.glDrawArraysInstanced(drawMode, first, count, instanceCount);        
     }
 
     @Override
-    public void vertexArrayDrawElements(GLES3XVertexArray vao, int drawMode, int count, int type, long offset) {
-        final int currentVao = GLES20.glGetInteger(GLES30.GL_VERTEX_ARRAY_BINDING);
-
+    public void vertexArrayDrawElements(GLES3XVertexArray vao, int drawMode, int count, int type, long offset) {        
         GLES30.glBindVertexArray(vao.vertexArrayId);
-        GLES20.glDrawElements(drawMode, count, type, offset);
-        GLES30.glBindVertexArray(currentVao);
+        GLES20.glDrawElements(drawMode, count, type, offset);        
     }
 
     @Override
     public void vertexArrayDrawElementsIndirect(GLES3XVertexArray vao, GLES3XBuffer cmdBuffer, int drawMode, int indexType, long offset) {
-        if (GLES.getCapabilities().GLES31) {
-            final int currentVao = GLES20.glGetInteger(GLES30.GL_VERTEX_ARRAY_BINDING);
-            final int currentIndirect = GLES20.glGetInteger(GLES31.GL_DRAW_INDIRECT_BUFFER_BINDING);
-
+        if (GLES.getCapabilities().GLES31) {            
             GLES30.glBindVertexArray(vao.vertexArrayId);
             GLES20.glBindBuffer(GLES31.GL_DRAW_INDIRECT_BUFFER, cmdBuffer.bufferId);
-            GLES31.glDrawElementsIndirect(drawMode, indexType, offset);
-            GLES20.glBindBuffer(GLES31.GL_DRAW_INDIRECT_BUFFER, currentIndirect);
-            GLES30.glBindVertexArray(currentVao);
+            GLES31.glDrawElementsIndirect(drawMode, indexType, offset);            
         } else {
             throw new UnsupportedOperationException("Draw Elements Indirect is not supported!");
         }

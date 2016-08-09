@@ -13,8 +13,12 @@ import java.nio.ByteBuffer;
  * @author zmichaels
  */
 public final class GLES3XBuffer implements Buffer {
+
+    int access;
     int bufferId = -1;
     ByteBuffer mapBuffer;
+    long size;
+    int usage;
     
     @Override
     public boolean isValid() {

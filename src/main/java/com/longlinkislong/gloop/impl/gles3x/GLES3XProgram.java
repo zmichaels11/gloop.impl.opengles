@@ -16,6 +16,7 @@ import java.util.Map;
 public final class GLES3XProgram implements Program {
     int programId = -1;
     final Map<String, Integer> uniformBindings = new HashMap<>(0);
+    final Map<String, Integer> storageBindings = new HashMap<>(0);
     
     @Override
     public boolean isValid() {
