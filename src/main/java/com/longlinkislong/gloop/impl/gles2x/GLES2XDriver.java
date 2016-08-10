@@ -792,15 +792,20 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
 
     @Override
     public void vertexArrayAttachBuffer(GLES2XVertexArray vao, int index, GLES2XBuffer buffer, int size, int type, int stride, long offset, int divisor) {
-        if (divisor != 0) {
-            throw new UnsupportedOperationException("OpenGLES 2.0 does not support vertex array divisors!");
-        }
+        final GLESCapabilities caps = GLES.createCapabilities();
 
-        if (GLES.getCapabilities().GL_OES_vertex_array_object) {
+        if (caps.GL_OES_vertex_array_object) {
             OESVertexArrayObject.glBindVertexArrayOES(vao.vertexArrayId);
 
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
             GLES20.glVertexAttribPointer(index, size, type, false, stride, offset);
+
+            if (divisor != 0 && caps.GL_ANGLE_instanced_arrays) {
+                ANGLEInstancedArrays.glVertexAttribDivisorANGLE(index, divisor);
+            } else {
+                throw new UnsupportedOperationException("ANGLE_instanced_arrays is not supported!");
+            }
+
             GLES20.glEnableVertexAttribArray(index);
         } else {
             final Runnable bindStatement = () -> {
