@@ -800,11 +800,13 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
             GLES20.glVertexAttribPointer(index, size, type, false, stride, offset);
 
-            if (divisor != 0 && caps.GL_ANGLE_instanced_arrays) {
-                ANGLEInstancedArrays.glVertexAttribDivisorANGLE(index, divisor);
-            } else {
-                throw new UnsupportedOperationException("ANGLE_instanced_arrays is not supported!");
-            }
+            if (divisor != 0) {
+                if (caps.GL_ANGLE_instanced_arrays) {
+                    ANGLEInstancedArrays.glVertexAttribDivisorANGLE(index, divisor);
+                } else {
+                    throw new UnsupportedOperationException("ANGLE_instanced_arrays is not supported!");
+                }
+            }            
 
             GLES20.glEnableVertexAttribArray(index);
         } else {
