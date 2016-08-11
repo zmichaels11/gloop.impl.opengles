@@ -25,7 +25,7 @@ import org.lwjgl.opengles.GLES20;
 import org.lwjgl.opengles.GLESCapabilities;
 import org.lwjgl.opengles.OESMapbuffer;
 import org.lwjgl.opengles.OESVertexArrayObject;
-import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -738,13 +738,12 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
     public void textureSetData(GLES2XTexture texture, int level, int xOffset, int yOffset, int zOffset, int width, int height, int depth, int format, int type, ByteBuffer data) {
         GLES20.glBindTexture(texture.target, texture.textureId);
         if (format == GL_BGRA) {
-            try (MemoryStack stack = MemoryStack.stackPush()) {
-                final int size = data.capacity();
-                final ByteBuffer rgbaData = stack.malloc(size);
+            final int size = data.capacity();
+            final ByteBuffer rgbaData = MemoryUtil.memAlloc(size);
 
-                CommonUtils.rbPixelSwap(rgbaData, data);
-                GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, level, xOffset, yOffset, width, height, format, type, rgbaData);
-            }
+            CommonUtils.rbPixelSwap(rgbaData, data);
+            GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, level, xOffset, yOffset, width, height, GLES20.GL_RGBA, type, rgbaData);
+            MemoryUtil.memFree(rgbaData);
         } else {
             GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, level, xOffset, yOffset, width, height, format, type, data);
         }
