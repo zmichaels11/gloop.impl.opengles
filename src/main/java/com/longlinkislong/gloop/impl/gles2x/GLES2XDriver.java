@@ -7,11 +7,13 @@ package com.longlinkislong.gloop.impl.gles2x;
 
 import com.longlinkislong.gloop.glspi.Driver;
 import com.longlinkislong.gloop.glspi.Shader;
+import com.longlinkislong.gloop.impl.gles.CommonUtils;
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import org.lwjgl.opengl.GL11;
+import static org.lwjgl.opengl.GL12.GL_BGRA;
 import org.lwjgl.opengles.ANGLEFramebufferBlit;
 import org.lwjgl.opengles.ANGLEInstancedArrays;
 import org.lwjgl.opengles.EXTDrawBuffers;
@@ -23,6 +25,7 @@ import org.lwjgl.opengles.GLES20;
 import org.lwjgl.opengles.GLESCapabilities;
 import org.lwjgl.opengles.OESMapbuffer;
 import org.lwjgl.opengles.OESVertexArrayObject;
+import org.lwjgl.system.MemoryStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -734,8 +737,17 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
     @Override
     public void textureSetData(GLES2XTexture texture, int level, int xOffset, int yOffset, int zOffset, int width, int height, int depth, int format, int type, ByteBuffer data) {
         GLES20.glBindTexture(texture.target, texture.textureId);
+        if (format == GL_BGRA) {
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                final int size = data.capacity();
+                final ByteBuffer rgbaData = stack.malloc(size);
 
-        GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, level, xOffset, yOffset, width, height, format, type, data);
+                CommonUtils.rbPixelSwap(rgbaData, data);
+                GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, level, xOffset, yOffset, width, height, format, type, rgbaData);
+            }
+        } else {
+            GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, level, xOffset, yOffset, width, height, format, type, data);
+        }
     }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GLES2XDriver.class);
@@ -806,7 +818,7 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
                 } else {
                     throw new UnsupportedOperationException("ANGLE_instanced_arrays is not supported!");
                 }
-            }            
+            }
 
             GLES20.glEnableVertexAttribArray(index);
         } else {

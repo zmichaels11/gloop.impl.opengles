@@ -7,10 +7,12 @@ package com.longlinkislong.gloop.impl.gles3x;
 
 import com.longlinkislong.gloop.glspi.Driver;
 import com.longlinkislong.gloop.glspi.Shader;
+import com.longlinkislong.gloop.impl.gles.CommonUtils;
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import static org.lwjgl.opengl.GL12.GL_BGRA;
 import org.lwjgl.opengles.EXTBufferStorage;
 import org.lwjgl.opengles.EXTTextureFilterAnisotropic;
 import org.lwjgl.opengles.GLES;
@@ -18,6 +20,7 @@ import org.lwjgl.opengles.GLES20;
 import org.lwjgl.opengles.GLES30;
 import org.lwjgl.opengles.GLES31;
 import org.lwjgl.opengles.GLESCapabilities;
+import org.lwjgl.system.MemoryStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -851,20 +854,41 @@ public final class GLES3XDriver implements Driver<
     }
 
     @Override
-    public void textureSetData(GLES3XTexture texture, int level, int xOffset, int yOffset, int zOffset, int width, int height, int depth, int format, int type, ByteBuffer data) {
+    public void textureSetData(GLES3XTexture texture, int level, int xOffset, int yOffset, int zOffset, int width, int height, int depth, int format, int type, ByteBuffer data) {        
         switch (texture.target) {
             case GLES20.GL_TEXTURE_2D: {
                 GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture.textureId);
-                GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, level, xOffset, yOffset, width, height, format, type, data);
+
+                if (format == GL_BGRA) {
+                    try (MemoryStack stack = MemoryStack.stackPush()) {
+                        final int size = data.capacity();
+                        final ByteBuffer rgbaData = stack.malloc(size);
+
+                        CommonUtils.rbPixelSwap(rgbaData, data);
+                        GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, level, xOffset, yOffset, width, height, format, type, rgbaData);
+                    }
+                } else {
+                    GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, level, xOffset, yOffset, width, height, format, type, data);
+                }
             }
             break;
             case GLES30.GL_TEXTURE_3D: {
                 GLES20.glBindTexture(GLES30.GL_TEXTURE_3D, texture.textureId);
-                GLES30.glTexSubImage3D(GLES30.GL_TEXTURE_3D, level, xOffset, yOffset, zOffset, width, height, depth, format, type, data);
+
+                if (format == GL_BGRA) {
+                    try (MemoryStack stack = MemoryStack.stackPush()) {
+                        final int size = data.capacity();
+                        final ByteBuffer rgbaData = stack.malloc(size);
+
+                        CommonUtils.rbPixelSwap(rgbaData, data);
+                        GLES30.glTexSubImage3D(GLES30.GL_TEXTURE_3D, level, xOffset, yOffset, zOffset, width, height, depth, format, type, data);
+                    }
+                } else {
+                    GLES30.glTexSubImage3D(GLES30.GL_TEXTURE_3D, level, xOffset, yOffset, zOffset, width, height, depth, format, type, data);
+                }
             }
             break;
-
-        }
+        }        
     }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GLES3XDriver.class);
