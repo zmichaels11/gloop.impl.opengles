@@ -751,7 +751,7 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
                 GLES20.glTexParameteri(tt.target, pName, value);
                 break;
             default:
-                LOGGER.warn("Unsupported texture parameter name: {}", pName);
+                LOGGER.trace("Unsupported texture parameter name: {}", pName);
         }
     }
 
@@ -760,7 +760,7 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
         switch (pName) {
             case EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT:
                 if (!GLES.getCapabilities().GL_EXT_texture_filter_anisotropic) {
-                    LOGGER.warn("EXT_texture_filter_anisotropic is not supported!");
+                    LOGGER.trace("EXT_texture_filter_anisotropic is not supported!");
                     return;
                 }
             case GLES20.GL_TEXTURE_MIN_FILTER:
@@ -771,7 +771,7 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
                 GLES20.glTexParameterf(tt.target, pName, value);
                 break;
             default:
-                LOGGER.warn("Unsupported texture parameter name: {}", pName);
+                LOGGER.trace("Unsupported texture parameter name: {}", pName);
         }
     }
 

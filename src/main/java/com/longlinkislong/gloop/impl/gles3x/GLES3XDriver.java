@@ -890,7 +890,7 @@ public final class GLES3XDriver implements Driver<
                 GLES20.glTexParameteri(texture.target, param, value);
                 break;
             default:
-                LOGGER.warn("Unsupported parameter name: {}", param);
+                LOGGER.trace("Unsupported parameter name: {}", param);
         }
     }
 
@@ -899,7 +899,7 @@ public final class GLES3XDriver implements Driver<
         switch (param) {
             case EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT:
                 if (!GLES.getCapabilities().GL_EXT_texture_filter_anisotropic) {
-                    LOGGER.warn("EXT_texture_filter_anisotropic is not supported!");
+                    LOGGER.trace("EXT_texture_filter_anisotropic is not supported!");
                     return;
                 }
             case GLES30.GL_TEXTURE_BASE_LEVEL:
@@ -920,7 +920,7 @@ public final class GLES3XDriver implements Driver<
                 GLES20.glTexParameterf(texture.target, param, value);
                 break;
             default:
-                LOGGER.warn("Unsupported parameter name: {}", param);
+                LOGGER.trace("Unsupported parameter name: {}", param);
         }
     }
 
