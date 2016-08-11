@@ -28,9 +28,9 @@ public final class CommonUtils {
             final byte a = src.get(i + 3);
 
             dst.put(i, r);
-            dst.put(i, g);
-            dst.put(i, b);
-            dst.put(i, a);
+            dst.put(i + 1, g);
+            dst.put(i + 2, b);
+            dst.put(i + 3, a);
         }
 
         return dst;
