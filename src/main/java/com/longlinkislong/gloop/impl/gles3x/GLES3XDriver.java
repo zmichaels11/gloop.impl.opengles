@@ -12,9 +12,9 @@ import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
-import static org.lwjgl.opengl.GL12.GL_BGRA;
 import org.lwjgl.opengles.EXTBufferStorage;
 import org.lwjgl.opengles.EXTTextureFilterAnisotropic;
+import static org.lwjgl.opengles.EXTTextureFormatBGRA8888.GL_BGRA_EXT;
 import org.lwjgl.opengles.GLES;
 import org.lwjgl.opengles.GLES20;
 import org.lwjgl.opengles.GLES30;
@@ -739,11 +739,7 @@ public final class GLES3XDriver implements Driver<
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES30.GL_TEXTURE_BASE_LEVEL, 0);
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAX_LEVEL, mipmaps);
 
-                for (int i = 0; i < mipmaps; i++) {
-                    GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, i, internalFormat, width, height, 0, guessFormat(internalFormat), dataType, 0);
-                    width = Math.max(1, (width / 2));
-                    height = Math.max(1, (height / 2));
-                }
+                GLES30.glTexStorage2D(GLES20.GL_TEXTURE_2D, mipmaps, internalFormat, width, height);
 
                 break;
             case GLES30.GL_TEXTURE_3D:
@@ -751,12 +747,7 @@ public final class GLES3XDriver implements Driver<
                 GLES20.glTexParameteri(GLES30.GL_TEXTURE_3D, GLES30.GL_TEXTURE_BASE_LEVEL, 0);
                 GLES20.glTexParameteri(GLES30.GL_TEXTURE_3D, GLES30.GL_TEXTURE_MAX_LEVEL, mipmaps);
 
-                for (int i = 0; i < mipmaps; i++) {
-                    GLES30.glTexImage3D(GLES30.GL_TEXTURE_3D, i, internalFormat, width, height, depth, 0, guessFormat(internalFormat), dataType, 0);
-                    width = Math.max(1, (width / 2));
-                    height = Math.max(1, (height / 2));
-                    depth = Math.max(1, (depth / 2));
-                }
+                GLES30.glTexStorage3D(GLES30.GL_TEXTURE_3D, mipmaps, internalFormat, width, height, depth);                
 
                 break;
         }
@@ -859,7 +850,7 @@ public final class GLES3XDriver implements Driver<
             case GLES20.GL_TEXTURE_2D: {
                 GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture.textureId);
 
-                if (format == GL_BGRA) {
+                if (format == GL_BGRA_EXT && !GLES.getCapabilities().GL_EXT_texture_format_BGRA8888) {
                     final int size = data.capacity();
                     final ByteBuffer rgbaData = MemoryUtil.memAlloc(size);
 
@@ -874,13 +865,13 @@ public final class GLES3XDriver implements Driver<
             case GLES30.GL_TEXTURE_3D: {
                 GLES20.glBindTexture(GLES30.GL_TEXTURE_3D, texture.textureId);
 
-                if (format == GL_BGRA) {                    
-                        final int size = data.capacity();
-                        final ByteBuffer rgbaData = MemoryUtil.memAlloc(size);
+                if (format == GL_BGRA_EXT && !GLES.getCapabilities().GL_EXT_texture_format_BGRA8888) {
+                    final int size = data.capacity();
+                    final ByteBuffer rgbaData = MemoryUtil.memAlloc(size);
 
-                        CommonUtils.rbPixelSwap(rgbaData, data);
-                        GLES30.glTexSubImage3D(GLES30.GL_TEXTURE_3D, level, xOffset, yOffset, zOffset, width, height, depth, GLES20.GL_RGBA, type, rgbaData);
-                        MemoryUtil.memFree(rgbaData);
+                    CommonUtils.rbPixelSwap(rgbaData, data);
+                    GLES30.glTexSubImage3D(GLES30.GL_TEXTURE_3D, level, xOffset, yOffset, zOffset, width, height, depth, GLES20.GL_RGBA, type, rgbaData);
+                    MemoryUtil.memFree(rgbaData);
                 } else {
                     GLES30.glTexSubImage3D(GLES30.GL_TEXTURE_3D, level, xOffset, yOffset, zOffset, width, height, depth, format, type, data);
                 }

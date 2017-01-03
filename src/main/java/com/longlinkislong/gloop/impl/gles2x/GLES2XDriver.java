@@ -13,13 +13,14 @@ import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import org.lwjgl.opengl.GL11;
-import static org.lwjgl.opengl.GL12.GL_BGRA;
 import org.lwjgl.opengles.ANGLEFramebufferBlit;
 import org.lwjgl.opengles.ANGLEInstancedArrays;
 import org.lwjgl.opengles.EXTDrawBuffers;
 import org.lwjgl.opengles.EXTInstancedArrays;
 import org.lwjgl.opengles.EXTMapBufferRange;
 import org.lwjgl.opengles.EXTTextureFilterAnisotropic;
+import org.lwjgl.opengles.EXTTextureFormatBGRA8888;
+import org.lwjgl.opengles.EXTTextureStorage;
 import org.lwjgl.opengles.GLES;
 import org.lwjgl.opengles.GLES20;
 import org.lwjgl.opengles.GLESCapabilities;
@@ -636,12 +637,16 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
 
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture.textureId);
 
-        for (int i = 0; i < mipmaps; i++) {
-            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, i, internalFormat, width, height, 0, guessFormat(internalFormat), dataType, 0);
-            width = Math.max(1, (width / 2));
-            height = Math.max(1, (height / 2));
+        if (GLES.getCapabilities().GL_EXT_texture_storage) {            
+            EXTTextureStorage.glTexStorage2DEXT(GLES20.GL_TEXTURE_2D, mipmaps, internalFormat, width, height);            
+        } else {
+            for (int i = 0; i < mipmaps; i++) {
+                GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, i, internalFormat, width, height, 0, guessFormat(internalFormat), dataType, 0);
+                width = Math.max(1, (width / 2));
+                height = Math.max(1, (height / 2));
+            }
         }
-
+        
         return texture;
     }
 
@@ -737,7 +742,7 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
     @Override
     public void textureSetData(GLES2XTexture texture, int level, int xOffset, int yOffset, int zOffset, int width, int height, int depth, int format, int type, ByteBuffer data) {
         GLES20.glBindTexture(texture.target, texture.textureId);
-        if (format == GL_BGRA) {
+        if (format == EXTTextureFormatBGRA8888.GL_BGRA_EXT && !GLES.getCapabilities().GL_EXT_texture_format_BGRA8888) {
             final int size = data.capacity();
             final ByteBuffer rgbaData = MemoryUtil.memAlloc(size);
 
