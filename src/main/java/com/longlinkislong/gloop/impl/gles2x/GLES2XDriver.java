@@ -13,6 +13,7 @@ import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengles.ANGLEFramebufferBlit;
 import org.lwjgl.opengles.ANGLEInstancedArrays;
 import org.lwjgl.opengles.EXTDrawBuffers;
@@ -538,7 +539,7 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
         renderbuffer.renderbufferId = GLES20.glGenRenderbuffers();
 
         GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER, renderbuffer.renderbufferId);
-        GLES20.glRenderbufferStorage(GLES20.GL_RENDERBUFFER, simplifyFormat(internalFormat), width, height);
+        GLES20.glRenderbufferStorage(GLES20.GL_RENDERBUFFER, internalFormat, width, height);
 
         return renderbuffer;
     }
@@ -627,9 +628,7 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
             throw new IllegalArgumentException("OpenGLES2.0 only supports 2D textures!");
         }
 
-        internalFormat = simplifyFormat(internalFormat);
-
-        final GLES2XTexture texture = new GLES2XTexture();
+        final GLES2XTexture texture = new GLES2XTexture();        
 
         texture.textureId = GLES20.glGenTextures();
         texture.target = GLES20.GL_TEXTURE_2D;
@@ -637,8 +636,8 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
 
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture.textureId);
 
-        if (GLES.getCapabilities().GL_EXT_texture_storage) {            
-            EXTTextureStorage.glTexStorage2DEXT(GLES20.GL_TEXTURE_2D, mipmaps, internalFormat, width, height);            
+        if (GLES.getCapabilities().GL_EXT_texture_storage) {
+            EXTTextureStorage.glTexStorage2DEXT(GLES20.GL_TEXTURE_2D, mipmaps, internalFormat, width, height);
         } else {
             for (int i = 0; i < mipmaps; i++) {
                 GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, i, internalFormat, width, height, 0, guessFormat(internalFormat), dataType, 0);
@@ -646,7 +645,7 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
                 height = Math.max(1, (height / 2));
             }
         }
-        
+
         return texture;
     }
 
@@ -961,20 +960,14 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
             case GLES20.GL_LUMINANCE_ALPHA:
             case GLES20.GL_RGB:
             case GLES20.GL_RGBA:
+            case EXTTextureFormatBGRA8888.GL_BGRA_EXT:
                 return internalFormat;
-            default:
-                return GLES20.GL_RGBA;
-        }
-    }
-
-    int simplifyFormat(final int format) {
-        switch (format) {
-            case GL11.GL_RGB8:
+            case GLES20.GL_RGB565:
                 return GLES20.GL_RGB;
-            case GL11.GL_RGBA8:
-                return GLES20.GL_RGBA;
+            case GLES20.GL_RGB5_A1:
+            case GLES20.GL_RGBA4:
             default:
-                return format;
+                return GLES20.GL_RGBA;
         }
     }
 }
