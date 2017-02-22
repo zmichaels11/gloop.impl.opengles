@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  * @author zmichaels
  */
 public final class GLES3XDriver implements Driver<
-        GLES3XBuffer, GLES3XFramebuffer, GLES3XRenderbuffer, GLES3XTexture, GLES3XShader, GLES3XProgram, GLES3XSampler, GLES3XVertexArray, GLES3XDrawQuery> {
+        GLES3XBuffer, GLES3XFramebuffer, GLES3XRenderbuffer, GLES3XTexture, GLES3XShader, GLES3XProgram, GLES3XSampler, GLES3XVertexArray> {
 
     @Override
     public void blendingDisable() {
@@ -209,37 +209,7 @@ public final class GLES3XDriver implements Driver<
     public void depthTestEnable(int depthTest) {
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
         GLES20.glDepthFunc(depthTest);
-    }
-
-    @Override
-    public void drawQueryBeginConditionalRender(GLES3XDrawQuery query, int mode) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public GLES3XDrawQuery drawQueryCreate() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void drawQueryDelete(GLES3XDrawQuery query) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void drawQueryDisable(int condition) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void drawQueryEnable(int condition, GLES3XDrawQuery query) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void drawQueryEndConditionRender() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+    }    
 
     @Override
     public void framebufferAddAttachment(GLES3XFramebuffer framebuffer, int attachmentId, GLES3XTexture texId, int mipmapLevel) {
@@ -397,8 +367,7 @@ public final class GLES3XDriver implements Driver<
     }
 
     @Override
-    public int programGetUniformLocation(GLES3XProgram program, String name) {
-        GLES20.glUseProgram(program.programId);
+    public int programGetUniformLocation(GLES3XProgram program, String name) {        
         return GLES20.glGetUniformLocation(program.programId, name);
     }
 
@@ -418,22 +387,12 @@ public final class GLES3XDriver implements Driver<
     @Override
     public void programSetAttribLocation(GLES3XProgram program, int index, String name) {
         GLES20.glBindAttribLocation(program.programId, index, name);
-    }
-
-    @Override
-    public void programSetFeedbackBuffer(GLES3XProgram program, int varyingLoc, GLES3XBuffer buffer) {
-        GLES30.glBindBufferBase(GLES30.GL_TRANSFORM_FEEDBACK_BUFFER, varyingLoc, buffer.bufferId);
-    }
+    }    
 
     @Override
     public void programSetFeedbackVaryings(GLES3XProgram program, String[] varyings) {
         GLES30.glTransformFeedbackVaryings(program.programId, varyings, GLES30.GL_SEPARATE_ATTRIBS);
-    }
-
-    @Override
-    public void programSetStorage(GLES3XProgram program, String storageName, GLES3XBuffer buffer, int bindingPoint) {
-        throw new UnsupportedOperationException("Removed deprecated call");
-    }
+    }    
 
     @Override
     public void programSetStorageBlockBinding(GLES3XProgram pt, String uniformName, int binding) {
@@ -441,11 +400,6 @@ public final class GLES3XDriver implements Driver<
 
         GLES30.glUniformBlockBinding(pt.programId, sBlockIndex, binding);
         pt.storageBindings.put(uniformName, binding);
-    }
-
-    @Override
-    public void programSetUniformBlock(GLES3XProgram program, String uniformName, GLES3XBuffer buffer, int bindingPoint) {
-        throw new UnsupportedOperationException("Removed deprecated call");
     }
 
     @Override
@@ -756,19 +710,9 @@ public final class GLES3XDriver implements Driver<
     }
 
     @Override
-    public void textureAllocatePage(GLES3XTexture texture, int level, int xOffset, int yOffset, int zOffset, int width, int height, int depth) {
-        throw new UnsupportedOperationException("Sparse textures are not supported!");
-    }
-
-    @Override
     public void textureBind(GLES3XTexture texture, int unit) {
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + unit);
         GLES20.glBindTexture(texture.target, texture.textureId);
-    }
-
-    @Override
-    public void textureDeallocatePage(GLES3XTexture texture, int level, int xOffset, int yOffset, int zOffset, int width, int height, int depth) {
-        throw new UnsupportedOperationException("Sparse textures are not supported!");
     }
 
     @Override
@@ -807,21 +751,6 @@ public final class GLES3XDriver implements Driver<
     @Override
     public int textureGetMaxSize() {
         return GLES20.glGetInteger(GLES20.GL_MAX_TEXTURE_SIZE);
-    }
-
-    @Override
-    public int textureGetPageDepth(GLES3XTexture texture) {
-        throw new UnsupportedOperationException("Sparse textures are not supported!");
-    }
-
-    @Override
-    public int textureGetPageHeight(GLES3XTexture texture) {
-        throw new UnsupportedOperationException("Sparse textures are not supported!");
-    }
-
-    @Override
-    public int textureGetPageWidth(GLES3XTexture texture) {
-        throw new UnsupportedOperationException("Sparse textures are not supported!");
     }
 
     @Override
@@ -1040,6 +969,37 @@ public final class GLES3XDriver implements Driver<
     @Override
     public void viewportApply(int x, int y, int width, int height) {
         GLES20.glViewport(x, y, width, height);
+    }
+
+    @Override
+    public void textureGetData(GLES3XTexture texture, int level, int format, int type, GLES3XBuffer out, long offset, int size) {
+        throw new UnsupportedOperationException("OpenGLES does not support texture downloads!");
+    }
+
+    @Override
+    public void textureSetData(GLES3XTexture texture, int level, int xOffset, int yOffset, int zOffset, int width, int height, int depth, int format, int type, GLES3XBuffer buffer, long offset) {
+        final int currentTex;
+        
+        switch (texture.target) {
+            case GLES20.GL_TEXTURE_2D:
+                currentTex = GLES20.glGetInteger(GLES20.GL_TEXTURE_BINDING_2D);
+                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture.textureId);
+                GLES20.glBindBuffer(GLES30.GL_PIXEL_PACK_BUFFER, buffer.bufferId);
+                GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, level, xOffset, yOffset, width, height, format, type, 0L);
+                GLES20.glBindBuffer(GLES30.GL_PIXEL_PACK_BUFFER, 0);
+                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, currentTex);
+                break;
+            case GLES30.GL_TEXTURE_3D:
+                currentTex = GLES20.glGetInteger(GLES30.GL_TEXTURE_BINDING_3D);
+                GLES20.glBindTexture(GLES30.GL_TEXTURE_3D, texture.textureId);
+                GLES20.glBindBuffer(GLES30.GL_PIXEL_PACK_BUFFER, buffer.bufferId);
+                GLES30.glTexSubImage3D(GLES30.GL_TEXTURE_3D, level, xOffset, yOffset, zOffset, width, height, depth, format, type, 0L);
+                GLES20.glBindBuffer(GLES30.GL_PIXEL_PACK_BUFFER, 0);
+                GLES20.glBindTexture(GLES30.GL_TEXTURE_3D, currentTex);
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported texture target: " + texture.target);
+        }
     }
 
 }

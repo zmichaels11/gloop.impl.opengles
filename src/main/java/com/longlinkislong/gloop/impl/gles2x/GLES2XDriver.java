@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author zmichaels
  */
-final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES2XRenderbuffer, GLES2XTexture, GLES2XShader, GLES2XProgram, GLES2XSampler, GLES2XVertexArray, GLES2XDrawQuery> {
+final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES2XRenderbuffer, GLES2XTexture, GLES2XShader, GLES2XProgram, GLES2XSampler, GLES2XVertexArray> {
 
     @Override
     public void blendingDisable() {
@@ -218,37 +218,7 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
     public void depthTestEnable(int depthTest) {
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
         GLES20.glDepthFunc(depthTest);
-    }
-
-    @Override
-    public void drawQueryBeginConditionalRender(GLES2XDrawQuery queryt, int i) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public GLES2XDrawQuery drawQueryCreate() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void drawQueryDelete(GLES2XDrawQuery queryt) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void drawQueryDisable(int i) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void drawQueryEnable(int i, GLES2XDrawQuery queryt) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void drawQueryEndConditionRender() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+    }    
 
     @Override
     public void framebufferAddAttachment(GLES2XFramebuffer ft, int attachmentId, GLES2XTexture texId, int mipmapLevel) {
@@ -415,28 +385,13 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
     }
 
     @Override
-    public void programSetFeedbackBuffer(GLES2XProgram pt, int i, GLES2XBuffer bt) {
-        throw new UnsupportedOperationException("OpenGLES 2.0 does not support feedback buffers!");
-    }
-
-    @Override
     public void programSetFeedbackVaryings(GLES2XProgram pt, String[] strings) {
         throw new UnsupportedOperationException("OpenGLES 2.0 does not support feedback buffers!");
     }
 
     @Override
-    public void programSetStorage(GLES2XProgram pt, String string, GLES2XBuffer bt, int i) {
-        throw new UnsupportedOperationException("OpenGLES 2.0 does not support shader storage!");
-    }
-
-    @Override
     public void programSetStorageBlockBinding(GLES2XProgram pt, String string, int i) {
         throw new UnsupportedOperationException("OpenGLES 2.0 does not support shader storage!");
-    }
-
-    @Override
-    public void programSetUniformBlock(GLES2XProgram pt, String string, GLES2XBuffer bt, int i) {
-        throw new UnsupportedOperationException("OpenGLES 2.0 does not support uniform buffers!");
     }
 
     @Override
@@ -650,21 +605,11 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
     }
 
     @Override
-    public void textureAllocatePage(GLES2XTexture tt, int i, int i1, int i2, int i3, int i4, int i5, int i6) {
-        throw new UnsupportedOperationException("OpenGLES 2.0 does not support sparse textures!");
-    }
-
-    @Override
     public void textureBind(GLES2XTexture tt, int unit) {
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + unit);
         GLES20.glBindTexture(tt.target, tt.textureId);
     }
-
-    @Override
-    public void textureDeallocatePage(GLES2XTexture tt, int i, int i1, int i2, int i3, int i4, int i5, int i6) {
-        throw new UnsupportedOperationException("OpenGLES 2.0 does not support sparse textures!");
-    }
-
+    
     @Override
     public void textureDelete(GLES2XTexture tt) {
         if (tt.isValid()) {
@@ -701,21 +646,6 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
     @Override
     public int textureGetMaxSize() {
         return GLES20.glGetInteger(GLES20.GL_MAX_TEXTURE_SIZE);
-    }
-
-    @Override
-    public int textureGetPageDepth(GLES2XTexture tt) {
-        throw new UnsupportedOperationException("OpenGLES 2.0 does not support sparse textures!");
-    }
-
-    @Override
-    public int textureGetPageHeight(GLES2XTexture tt) {
-        throw new UnsupportedOperationException("OpenGLES 2.0 does not support sparse textures!");
-    }
-
-    @Override
-    public int textureGetPageWidth(GLES2XTexture tt) {
-        throw new UnsupportedOperationException("OpenGLES 2.0 does not support sparse textures!");
     }
 
     @Override
@@ -969,5 +899,15 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
             default:
                 return GLES20.GL_RGBA;
         }
+    }
+
+    @Override
+    public void textureGetData(GLES2XTexture texture, int level, int format, int type, GLES2XBuffer out, long offset, int size) {
+        throw new UnsupportedOperationException("OpenGLES does not support retriving texture data!");
+    }
+
+    @Override
+    public void textureSetData(GLES2XTexture texture, int level, int xOffset, int yOffset, int zOffset, int width, int height, int depth, int format, int type, GLES2XBuffer buffer, long offset) {
+        throw new UnsupportedOperationException("OpenGLES 2.0 does not support streaming texture data!");
     }
 }
