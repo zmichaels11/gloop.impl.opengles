@@ -191,12 +191,6 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
     }
 
     @Override
-    public void bufferSetData(GLES2XBuffer bt, ByteBuffer bb, int usage) {
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, bt.bufferId);
-        GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, bb, usage);
-    }
-
-    @Override
     public void bufferUnmapData(GLES2XBuffer bt) {
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, bt.bufferId);
         OESMapbuffer.glUnmapBufferOES(GLES20.GL_ARRAY_BUFFER);
@@ -909,5 +903,111 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
     @Override
     public void textureSetData(GLES2XTexture texture, int level, int xOffset, int yOffset, int zOffset, int width, int height, int depth, int format, int type, GLES2XBuffer buffer, long offset) {
         throw new UnsupportedOperationException("OpenGLES 2.0 does not support streaming texture data!");
+    }
+
+    @Override
+    public void bufferGetData(GLES2XBuffer buffer, long offset, int[] out) {        
+        throw new UnsupportedOperationException("OpenGLES 2.0 does not support reading buffer data!");
+    }
+
+    @Override
+    public void bufferGetData(GLES2XBuffer buffer, long offset, float[] out) {
+        throw new UnsupportedOperationException("OpenGLES 2.0 does not support reading buffer data!");
+    }
+
+    @Override
+    public void bufferSetData(GLES2XBuffer buffer, long offset, ByteBuffer data) {
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
+        GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, offset, data);
+    }
+
+    @Override
+    public void bufferSetData(GLES2XBuffer buffer, long offset, float[] data) {
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
+        GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, offset, data);
+    }
+
+    @Override
+    public void bufferSetData(GLES2XBuffer buffer, long offset, int[] data) {
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
+        GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, offset, data);
+    }
+
+    @Override
+    public void framebufferGetPixels(GLES2XFramebuffer framebuffer, int x, int y, int width, int height, int format, int type, int[] dst) {
+        final int currentFb = GLES20.glGetInteger(GLES20.GL_FRAMEBUFFER_BINDING);
+        
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, framebuffer.framebufferId);
+        GLES20.glReadPixels(x, y, width, height, format, type, dst);
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, currentFb);
+    }
+
+    @Override
+    public void framebufferGetPixels(GLES2XFramebuffer framebuffer, int x, int y, int width, int height, int format, int type, float[] dst) {
+        final int currentFb = GLES20.glGetInteger(GLES20.GL_FRAMEBUFFER_BINDING);
+        
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, framebuffer.framebufferId);
+        GLES20.glReadPixels(x, y, width, height, format, type, dst);
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, currentFb);
+    }
+
+    @Override
+    public void programSetUniformMatD(GLES2XProgram program, int uLoc, double[] mat) {
+        final float[] fMat = new float[mat.length];
+        
+        for (int i = 0; i < fMat.length; i++) {
+            fMat[i] = (float) mat[i];
+        }
+        
+        programSetUniformMatF(program, uLoc, fMat);
+    }
+
+    @Override
+    public void programSetUniformMatF(GLES2XProgram program, int uLoc, float[] mat) {
+        final int currentProgram;
+        switch (mat.length) {
+            case 4:
+                currentProgram = GLES20.glGetInteger(GLES20.GL_CURRENT_PROGRAM);
+                GLES20.glUseProgram(program.programId);
+                GLES20.glUniformMatrix2fv(uLoc, false, mat);
+                GLES20.glUseProgram(currentProgram);
+                break;
+            case 9:
+                currentProgram = GLES20.glGetInteger(GLES20.GL_CURRENT_PROGRAM);
+                GLES20.glUseProgram(program.programId);
+                GLES20.glUniformMatrix3fv(uLoc, false, mat);
+                GLES20.glUseProgram(currentProgram);
+                break;
+            case 16:
+                currentProgram = GLES20.glGetInteger(GLES20.GL_CURRENT_PROGRAM);
+                GLES20.glUseProgram(program.programId);
+                GLES20.glUniformMatrix4fv(uLoc, false, mat);
+                GLES20.glUseProgram(currentProgram);
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported matrix length: " + mat.length);
+        }
+    }
+
+    @Override
+    public void textureGetData(GLES2XTexture texture, int level, int format, int type, int[] out) {
+        throw new UnsupportedOperationException("OpenGLES 2.0 does not support texture read!");
+    }
+
+    @Override
+    public void textureGetData(GLES2XTexture texture, int level, int format, int type, float[] out) {
+        throw new UnsupportedOperationException("OpenGLES 2.0 does not support texture read!");
+    }
+
+    @Override
+    public void textureSetData(GLES2XTexture texture, int level, int xOffset, int yOffset, int zOffset, int width, int height, int depth, int format, int type, int[] data) {
+        GLES20.glBindTexture(texture.target, texture.textureId);
+        GLES20.glTexSubImage2D(type, level, xOffset, yOffset, width, height, format, type, data);
+    }
+
+    @Override
+    public void textureSetData(GLES2XTexture texture, int level, int xOffset, int yOffset, int zOffset, int width, int height, int depth, int format, int type, float[] data) {
+        GLES20.glBindTexture(texture.target, texture.textureId);
+        GLES20.glTexSubImage2D(type, level, xOffset, yOffset, width, height, format, type, data);
     }
 }

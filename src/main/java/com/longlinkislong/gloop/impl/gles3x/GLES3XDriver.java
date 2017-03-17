@@ -210,20 +210,6 @@ public final class GLES3XDriver implements Driver<
     }
 
     @Override
-    public void bufferSetData(GLES3XBuffer buffer, ByteBuffer data, int usage) {
-        if (EXCLUSIVE_CONTEXT) {
-            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
-            GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, data, usage);
-        } else {
-            final int currentBuf = GLES20.glGetInteger(GLES20.GL_ARRAY_BUFFER_BINDING);
-
-            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
-            GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, data, usage);
-            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, currentBuf);
-        }
-    }
-
-    @Override
     public void bufferUnmapData(GLES3XBuffer buffer) {
         if (EXCLUSIVE_CONTEXT) {
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
@@ -1360,13 +1346,13 @@ public final class GLES3XDriver implements Driver<
     public void textureSetData(GLES3XTexture texture, int level, int xOffset, int yOffset, int zOffset, int width, int height, int depth, int format, int type, GLES3XBuffer buffer, long offset) {
         if (EXCLUSIVE_CONTEXT) {
             switch (texture.target) {
-                case GLES20.GL_TEXTURE_2D:                    
+                case GLES20.GL_TEXTURE_2D:
                     GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture.textureId);
                     GLES20.glBindBuffer(GLES30.GL_PIXEL_PACK_BUFFER, buffer.bufferId);
                     GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, level, xOffset, yOffset, width, height, format, type, 0L);
                     GLES20.glBindBuffer(GLES30.GL_PIXEL_PACK_BUFFER, 0);
                     break;
-                case GLES30.GL_TEXTURE_3D:                    
+                case GLES30.GL_TEXTURE_3D:
                     GLES20.glBindTexture(GLES30.GL_TEXTURE_3D, texture.textureId);
                     GLES20.glBindBuffer(GLES30.GL_PIXEL_PACK_BUFFER, buffer.bufferId);
                     GLES30.glTexSubImage3D(GLES30.GL_TEXTURE_3D, level, xOffset, yOffset, zOffset, width, height, depth, format, type, 0L);
@@ -1397,6 +1383,198 @@ public final class GLES3XDriver implements Driver<
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported texture target: " + texture.target);
+            }
+        }
+    }
+
+    @Override
+    public void bufferGetData(GLES3XBuffer buffer, long offset, int[] out) {
+        throw new UnsupportedOperationException("OpenGLES 3.0 does not support buffer read!");
+    }
+
+    @Override
+    public void bufferGetData(GLES3XBuffer buffer, long offset, float[] out) {
+        throw new UnsupportedOperationException("OpenGLES 3.0 does not support buffer read!");
+    }
+
+    @Override
+    public void bufferSetData(GLES3XBuffer buffer, long offset, ByteBuffer data) {
+        if (EXCLUSIVE_CONTEXT) {
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
+            GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, offset, data);
+        } else {
+            final int currentBuf = GLES20.glGetInteger(GLES20.GL_ARRAY_BUFFER_BINDING);
+
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
+            GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, offset, data);
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, currentBuf);
+        }
+    }
+
+    @Override
+    public void bufferSetData(GLES3XBuffer buffer, long offset, float[] data) {
+        if (EXCLUSIVE_CONTEXT) {
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
+            GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, offset, data);
+        } else {
+            final int currentBuf = GLES20.glGetInteger(GLES20.GL_ARRAY_BUFFER_BINDING);
+
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
+            GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, offset, data);
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, currentBuf);
+        }
+    }
+
+    @Override
+    public void bufferSetData(GLES3XBuffer buffer, long offset, int[] data) {
+        if (EXCLUSIVE_CONTEXT) {
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
+            GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, offset, data);
+        } else {
+            final int currentBuf = GLES20.glGetInteger(GLES20.GL_ARRAY_BUFFER_BINDING);
+
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer.bufferId);
+            GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, offset, data);
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, currentBuf);
+        }
+    }
+
+    @Override
+    public void framebufferGetPixels(GLES3XFramebuffer framebuffer, int x, int y, int width, int height, int format, int type, int[] dst) {
+        final int currentFb = GLES20.glGetInteger(GLES20.GL_FRAMEBUFFER_BINDING);
+
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, framebuffer.framebufferId);
+        GLES20.glReadPixels(x, y, width, height, format, type, dst);
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, currentFb);
+    }
+
+    @Override
+    public void framebufferGetPixels(GLES3XFramebuffer framebuffer, int x, int y, int width, int height, int format, int type, float[] dst) {
+        final int currentFb = GLES20.glGetInteger(GLES20.GL_FRAMEBUFFER_BINDING);
+
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, framebuffer.framebufferId);
+        GLES20.glReadPixels(x, y, width, height, format, type, dst);
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, currentFb);
+    }
+
+    @Override
+    public void programSetUniformMatD(GLES3XProgram program, int uLoc, double[] mat) {
+        final float[] fMat = new float[mat.length];
+
+        for (int i = 0; i < mat.length; i++) {
+            fMat[i] = (float) mat[i];
+        }
+
+        programSetUniformMatF(program, uLoc, fMat);
+    }
+
+    @Override
+    public void programSetUniformMatF(GLES3XProgram program, int uLoc, float[] mat) {
+        if (EXCLUSIVE_CONTEXT) {
+            switch (mat.length) {
+                case 4:
+                    GLES20.glUseProgram(program.programId);
+                    GLES20.glUniformMatrix2fv(uLoc, false, mat);
+                    break;
+                case 9:
+                    GLES20.glUseProgram(program.programId);
+                    GLES20.glUniformMatrix3fv(uLoc, false, mat);
+                    break;
+                case 16:
+                    GLES20.glUseProgram(program.programId);
+                    GLES20.glUniformMatrix4fv(uLoc, false, mat);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported matrix size: " + mat.length);
+            }
+        } else {
+            final int currentProgram;
+
+            switch (mat.length) {
+                case 4:
+                    currentProgram = GLES20.glGetInteger(GLES20.GL_CURRENT_PROGRAM);
+                    GLES20.glUseProgram(program.programId);
+                    GLES20.glUniformMatrix2fv(uLoc, false, mat);
+                    GLES20.glUseProgram(currentProgram);
+                    break;
+                case 9:
+                    currentProgram = GLES20.glGetInteger(GLES20.GL_CURRENT_PROGRAM);
+                    GLES20.glUseProgram(program.programId);
+                    GLES20.glUniformMatrix3fv(uLoc, false, mat);
+                    GLES20.glUseProgram(currentProgram);
+                    break;
+                case 16:
+                    currentProgram = GLES20.glGetInteger(GLES20.GL_CURRENT_PROGRAM);
+                    GLES20.glUseProgram(program.programId);
+                    GLES20.glUniformMatrix4fv(uLoc, false, mat);
+                    GLES20.glUseProgram(currentProgram);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported matrix size: " + mat.length);
+            }
+        }
+    }
+
+    @Override
+    public void textureGetData(GLES3XTexture texture, int level, int format, int type, int[] out) {
+        throw new UnsupportedOperationException("OpenGLES 3.0 does not support texture read!");
+    }
+
+    @Override
+    public void textureGetData(GLES3XTexture texture, int level, int format, int type, float[] out) {
+        throw new UnsupportedOperationException("OpenGLES 3.0 does not support texture read!");
+    }
+
+    @Override
+    public void textureSetData(GLES3XTexture texture, int level, int xOffset, int yOffset, int zOffset, int width, int height, int depth, int format, int type, int[] data) {
+        if (EXCLUSIVE_CONTEXT) {
+            GLES20.glBindTexture(texture.target, texture.textureId);
+            GLES20.glTexSubImage2D(type, level, xOffset, yOffset, width, height, format, type, data);
+        } else {
+            final int currentTex;
+
+            switch (texture.target) {
+                case GLES20.GL_TEXTURE_2D:
+                    currentTex = GLES20.glGetInteger(GLES20.GL_TEXTURE_BINDING_2D);
+                    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture.textureId);
+                    GLES20.glTexSubImage2D(type, level, xOffset, yOffset, width, height, format, type, data);
+                    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, currentTex);
+                    break;
+                case GLES30.GL_TEXTURE_3D:
+                    currentTex = GLES20.glGetInteger(GLES30.GL_TEXTURE_BINDING_3D);
+                    GLES20.glBindTexture(GLES30.GL_TEXTURE_3D, texture.textureId);
+                    GLES30.glTexSubImage3D(type, level, xOffset, yOffset, zOffset, width, height, depth, format, type, data);
+                    GLES20.glBindTexture(GLES30.GL_TEXTURE_3D, currentTex);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported texture target:" + texture.target);
+            }
+        }
+    }
+
+    @Override
+    public void textureSetData(GLES3XTexture texture, int level, int xOffset, int yOffset, int zOffset, int width, int height, int depth, int format, int type, float[] data) {
+        if (EXCLUSIVE_CONTEXT) {
+            GLES20.glBindTexture(texture.target, texture.textureId);
+            GLES20.glTexSubImage2D(type, level, xOffset, yOffset, width, height, format, type, data);
+        } else {
+            final int currentTex;
+
+            switch (texture.target) {
+                case GLES20.GL_TEXTURE_2D:
+                    currentTex = GLES20.glGetInteger(GLES20.GL_TEXTURE_BINDING_2D);
+                    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture.textureId);
+                    GLES20.glTexSubImage2D(type, level, xOffset, yOffset, width, height, format, type, data);
+                    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, currentTex);
+                    break;
+                case GLES30.GL_TEXTURE_3D:
+                    currentTex = GLES20.glGetInteger(GLES30.GL_TEXTURE_BINDING_3D);
+                    GLES20.glBindTexture(GLES30.GL_TEXTURE_3D, texture.textureId);
+                    GLES30.glTexSubImage3D(type, level, xOffset, yOffset, zOffset, width, height, depth, format, type, data);
+                    GLES20.glBindTexture(GLES30.GL_TEXTURE_3D, currentTex);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported texture target:" + texture.target);
             }
         }
     }
