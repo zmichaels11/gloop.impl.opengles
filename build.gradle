@@ -22,9 +22,5 @@ dependencies {
     compile "com.longlinkislong:gloop-spi:${getVersion('gloop-spi')}"
     
     compile "org.lwjgl:lwjgl:$lwjgl"
-    compile "org.lwjgl:lwjgl-opengl:$lwjgl"
-    
-    runtime "org.lwjgl:lwjgl-platform:$lwjgl:natives-windows"
-    runtime "org.lwjgl:lwjgl-platform:$lwjgl:natives-linux"
-    runtime "org.lwjgl:lwjgl-platform:$lwjgl:natives-osx"
+    compile "org.lwjgl:lwjgl-opengles:$lwjgl"
 }

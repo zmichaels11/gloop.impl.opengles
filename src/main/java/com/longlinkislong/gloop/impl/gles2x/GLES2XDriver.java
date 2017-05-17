@@ -12,8 +12,6 @@ import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengles.ANGLEFramebufferBlit;
 import org.lwjgl.opengles.ANGLEInstancedArrays;
 import org.lwjgl.opengles.EXTDrawBuffers;
@@ -24,6 +22,7 @@ import org.lwjgl.opengles.EXTTextureFormatBGRA8888;
 import org.lwjgl.opengles.EXTTextureStorage;
 import org.lwjgl.opengles.GLES;
 import org.lwjgl.opengles.GLES20;
+import org.lwjgl.opengles.GLES30;
 import org.lwjgl.opengles.GLESCapabilities;
 import org.lwjgl.opengles.OESMapbuffer;
 import org.lwjgl.opengles.OESVertexArrayObject;
@@ -475,10 +474,10 @@ final class GLES2XDriver implements Driver<GLES2XBuffer, GLES2XFramebuffer, GLES
     public GLES2XRenderbuffer renderbufferCreate(int internalFormat, int width, int height) {
         // adapt common OpenGL formats to similar OpenGLES formats
         switch (internalFormat) {
-            case GL11.GL_RGB8:
+            case GLES30.GL_RGB8:
                 internalFormat = GLES20.GL_RGB565;
                 break;
-            case GL11.GL_RGBA8:
+            case GLES30.GL_RGBA8:
                 internalFormat = GLES20.GL_RGBA4;
                 break;
         }
